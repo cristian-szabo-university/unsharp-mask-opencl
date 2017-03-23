@@ -1,5 +1,7 @@
+include (ExternalProject)
+
 ExternalProject_Add (
-    GLEW
+    glew
     
     SOURCE_SUBDIR "build/cmake"
     

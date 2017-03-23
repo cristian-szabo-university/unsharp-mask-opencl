@@ -1,8 +1,13 @@
+include (ExternalProject)
+
+set (OpenCL_Headers_VERSION_MAJOR 2 CACHE STRING "OpenCL major version." FORCE)
+set (OpenCL_Headers_VERSION_MINOR 1 CACHE STRING "OpenCL minor version." FORCE)
+
 ExternalProject_Add (
     OpenCL-Headers
 
     GIT_REPOSITORY "https://github.com/KhronosGroup/OpenCL-Headers.git"
-    GIT_TAG "opencl21"
+    GIT_TAG "opencl${OpenCL_Headers_VERSION_MAJOR}${OpenCL_Headers_VERSION_MINOR}"
     
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""

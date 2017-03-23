@@ -1,5 +1,7 @@
+include (ExternalProject)
+
 ExternalProject_Add (
-    GLFW
+    glfw3
     
     GIT_REPOSITORY "https://github.com/glfw/glfw.git"
     GIT_TAG "master"

@@ -1,8 +1,6 @@
 #pragma once
 
-#include "Lib.hpp"
-
-#include "docopt.h"
+#include <vector>
 
 class Program
 {
@@ -13,9 +11,5 @@ public:
     ~Program();
 
     int run();
-
-private:
-
-    std::map<std::string, docopt::value> args;
 
 };

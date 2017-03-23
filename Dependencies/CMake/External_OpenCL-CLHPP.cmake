@@ -1,3 +1,5 @@
+include (ExternalProject)
+
 ExternalProject_Add (
     OpenCL-CLHPP
         
