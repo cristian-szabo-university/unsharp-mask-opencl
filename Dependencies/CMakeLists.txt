@@ -10,4 +10,4 @@ set_directory_properties (PROPERTIES EP_BASE "${CMAKE_BINARY_DIR}")
 
 include ("External_GLEW")
 include ("External_GLFW")
-include ("External_OpenCL")
+include ("External_OpenCL-ICD-Loader")
