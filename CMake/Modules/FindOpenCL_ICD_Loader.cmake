@@ -7,6 +7,7 @@ find_library (OpenCL_ICD_Loader_LIBRARY
         ${DEPENDENCIES_PATH}
     PATH_SUFFIXES
         OpenCL-ICD-Loader/lib
+        OpenCL-ICD-Loader/bin
     NO_DEFAULT_PATH)
     
 find_package_handle_standard_args (OpenCL_ICD_Loader
