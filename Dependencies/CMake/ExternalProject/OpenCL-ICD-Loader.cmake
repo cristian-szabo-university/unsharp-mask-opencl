@@ -1,6 +1,6 @@
 include (ExternalProject)
 
-include ("External_OpenCL-Headers")
+include ("ExternalProject/OpenCL-Headers")
 
 ExternalProject_Add (
     OpenCL-ICD-Loader
