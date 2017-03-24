@@ -4,9 +4,7 @@ include (GNUInstallDirs)
 include (CMakePackageConfigHelpers)
 
 ###############################################################################
-#
 #   CONFIG
-#
 ###############################################################################
 
 project (Coursework VERSION 1.0.0)
@@ -23,26 +21,24 @@ set (CONFIG_FILE "${CMAKE_PROJECT_NAME}Config.cmake")
 set (VERSION_FILE "${CMAKE_PROJECT_NAME}ConfigVersion.cmake")
 set (CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/${CMAKE_PROJECT_NAME}/cmake")
 
-set (DEPENDENCIES_PATH "${CMAKE_CURRENT_BINARY_DIR}/Dependencies/Install" CACHE PATH "Location of the dependencies folder." FORCE)
+set (DEPENDENCIES_PATH "${CMAKE_CURRENT_BINARY_DIR}/Dependencies/Install" 
+    CACHE PATH "Location of the dependencies folder." FORCE)
 
 set_directory_properties (PROPERTIES EP_BASE "${CMAKE_BINARY_DIR}/ExternalProjects")
 
 ###############################################################################
-#
 #   PROJECTS
-#
 ###############################################################################
 
 add_subdirectory ("${CMAKE_SOURCE_DIR}/UnsharpMask")
 
 ###############################################################################
-#
 #   INSTALL
-#
 ###############################################################################
 
 configure_package_config_file (
-	"${CMAKE_SOURCE_DIR}/CMake/${CMAKE_PROJECT_NAME}Config.cmake" "${CMAKE_BINARY_DIR}/${CONFIG_FILE}"
+	"${CMAKE_SOURCE_DIR}/CMake/${CMAKE_PROJECT_NAME}Config.cmake" 
+    "${CMAKE_BINARY_DIR}/${CONFIG_FILE}"
 	INSTALL_DESTINATION "${CONFIG_INSTALL_DIR}")
 
 write_basic_package_version_file (
@@ -50,7 +46,8 @@ write_basic_package_version_file (
 	VERSION ${PROJECT_VERSION}
 	COMPATIBILITY SameMajorVersion)
 
-install (FILES "${CMAKE_BINARY_DIR}/${CONFIG_FILE}" "${CMAKE_BINARY_DIR}/${VERSION_FILE}"
+install (FILES "${CMAKE_BINARY_DIR}/${CONFIG_FILE}" 
+    "${CMAKE_BINARY_DIR}/${VERSION_FILE}"
     DESTINATION ${CONFIG_INSTALL_DIR})
 
 install (EXPORT ${EXPORT_NAME} 
@@ -58,9 +55,7 @@ install (EXPORT ${EXPORT_NAME}
     NAMESPACE "${CMAKE_PROJECT_NAME}::")
 
 ###############################################################################
-#
 #   PACKAGE
-#
 ###############################################################################
     
 set (CPACK_PACKAGE_NAME ${CMAKE_PROJECT_NAME})
