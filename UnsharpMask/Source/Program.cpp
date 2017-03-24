@@ -1,6 +1,6 @@
-#include "GL\glew.h"
-#include "CL\cl.hpp"
-#include "GLFW\glfw3.h"
+#include "GL/glew.h"
+#include "CL/cl.hpp"
+#include "GLFW/glfw3.h"
 
 #include "Program.hpp"
 
