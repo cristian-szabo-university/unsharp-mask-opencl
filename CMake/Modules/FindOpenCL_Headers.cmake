@@ -7,7 +7,7 @@ find_path (OpenCL_Headers_INCLUDE_DIR
     PATHS
         ${DEPENDENCIES_PATH}
     PATH_SUFFIXES
-        OpenCL-Headers
+        OpenCL-Headers/include
     NO_DEFAULT_PATH)
 
 foreach (VERSION "2_1" "2_0" "1_2" "1_1" "1_0")
