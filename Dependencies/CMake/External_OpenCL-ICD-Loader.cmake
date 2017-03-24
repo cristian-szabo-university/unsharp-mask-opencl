@@ -12,35 +12,23 @@ ExternalProject_Add (
     
     INSTALL_COMMAND "")
 
+ExternalProject_Get_Property (OpenCL-Headers INSTALL_DIR)
 ExternalProject_Get_Property (OpenCL-ICD-Loader SOURCE_DIR)
 
-ExternalProject_Add_Step (OpenCL-ICD-Loader copy_opencl_header_files
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${SOURCE_DIR}/inc/CL"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${OPENCL_HEADER_FILES} "${SOURCE_DIR}/inc/CL/"
-	DEPENDEES update
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+ExternalProject_Add_Step (OpenCL-ICD-Loader before_build
+    COMMAND ${CMAKE_COMMAND} "-DSRC=${INSTALL_DIR}/include/CL/*.h" "-DDST=${SOURCE_DIR}/inc/CL" -P "${CMAKE_SOURCE_DIR}/CMake/CopyFiles.cmake"
+    DEPENDEES update)
 
 ExternalProject_Get_Property (OpenCL-ICD-Loader BINARY_DIR)   
 ExternalProject_Get_Property (OpenCL-ICD-Loader INSTALL_DIR)
 
-set (FILE_NAME "OpenCL")
-
-set (OUTPUT_SHARED_FILE_NAME "${FILE_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}")
-set (OUTPUT_STATIC_FILE_NAME "${FILE_NAME}${CMAKE_STATIC_LIBRARY_SUFFIX}")
-
 if (WIN32)
-    ExternalProject_Add_Step (OpenCL-ICD-Loader install_opencl_dll_file
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${INSTALL_DIR}/bin"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${BINARY_DIR}/bin/$<CONFIG>/${OUTPUT_SHARED_FILE_NAME}" "${INSTALL_DIR}/bin/"
-        DEPENDEES install)
-        
-    ExternalProject_Add_Step (OpenCL-ICD-Loader install_opencl_lib_file
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${INSTALL_DIR}/lib"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${BINARY_DIR}/$<CONFIG>/${OUTPUT_STATIC_FILE_NAME}" "${INSTALL_DIR}/lib/"
+    ExternalProject_Add_Step (OpenCL-ICD-Loader after_install
+        COMMAND ${CMAKE_COMMAND} "-DSRC=${BINARY_DIR}/bin/$<CONFIG>/*${CMAKE_SHARED_LIBRARY_SUFFIX}" "-DDST=${INSTALL_DIR}/bin" -P "${CMAKE_SOURCE_DIR}/CMake/CopyFiles.cmake"
+        COMMAND ${CMAKE_COMMAND} "-DSRC=${BINARY_DIR}/$<CONFIG>/*${CMAKE_STATIC_LIBRARY_SUFFIX}" "-DDST=${INSTALL_DIR}/lib" -P "${CMAKE_SOURCE_DIR}/CMake/CopyFiles.cmake"
         DEPENDEES install)    
 else ()
-    ExternalProject_Add_Step (OpenCL-ICD-Loader install_opencl_file
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${INSTALL_DIR}/bin"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${BINARY_DIR}/bin/${OUTPUT_SHARED_FILE_NAME}" "${INSTALL_DIR}/bin/"
+    ExternalProject_Add_Step (OpenCL-ICD-Loader after_install
+        COMMAND ${CMAKE_COMMAND} "-DSRC=${BINARY_DIR}/bin/*${CMAKE_SHARED_LIBRARY_SUFFIX}" "-DDST=${INSTALL_DIR}/bin" -P "${CMAKE_SOURCE_DIR}/CMake/CopyFiles.cmake"
         DEPENDEES install)
 endif ()
