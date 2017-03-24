@@ -17,7 +17,8 @@ ExternalProject_Get_Property (OpenCL-ICD-Loader SOURCE_DIR)
 
 ExternalProject_Add_Step (OpenCL-ICD-Loader before_build
     COMMAND ${CMAKE_COMMAND} "-DSRC=${INSTALL_DIR}/include/CL/*.h" "-DDST=${SOURCE_DIR}/inc/CL" -P "${CMAKE_SOURCE_DIR}/CMake/CopyFiles.cmake"
-    DEPENDEES update)
+    DEPENDEES update    
+	DEPENDERS build)
 
 ExternalProject_Get_Property (OpenCL-ICD-Loader BINARY_DIR)   
 ExternalProject_Get_Property (OpenCL-ICD-Loader INSTALL_DIR)
