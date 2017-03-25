@@ -18,27 +18,25 @@ set(STR_CPP
 
 #include \"${FILE_HPP_OUT_NAME}\"
 
-namespace HonoursProject
+ProgramEntry::ProgramEntry(const std::string & name, const std::string & data, const std::string & hash)
+    : name(name), data(data), hash(hash)
 {
-    ProgramEntry::ProgramEntry(const std::string & name, const std::string & data, const std::string & hash)
-        : name(name), data(data), hash(hash)
-    {
-    }
+}
 
-    const std::string & ProgramEntry::getName() const
-    {
-        return name;
-    }
+const std::string & ProgramEntry::getName() const
+{
+    return name;
+}
 
-    const std::string & ProgramEntry::getData() const
-    {
-        return data;
-    }
+const std::string & ProgramEntry::getData() const
+{
+    return data;
+}
 
-    const std::string & ProgramEntry::getHash() const
-    {
-        return hash;
-    }
+const std::string & ProgramEntry::getHash() const
+{
+    return hash;
+}
 ")
 
 set(STR_HPP 
@@ -49,29 +47,27 @@ set(STR_HPP
 
 #include <string>
 
-namespace HonoursProject
+class ProgramEntry
 {
-    class ProgramEntry
-    {
-    public:
+public:
 
-        ProgramEntry(const std::string& name, const std::string& data, const std::string& hash);
+    ProgramEntry(const std::string& name, const std::string& data, const std::string& hash);
 
-        const std::string& getName() const;
+    const std::string& getName() const;
 
-        const std::string& getData() const;
+    const std::string& getData() const;
 
-        const std::string& getHash() const;
+    const std::string& getHash() const;
 
-    private:
+private:
 
-        std::string name;
+    std::string name;
 
-        std::string data;
+    std::string data;
 
-        std::string hash;
+    std::string hash;
 
-    };
+};
 ")
 
 foreach(cl ${cl_list})
@@ -95,17 +91,13 @@ foreach(cl ${cl_list})
 
     string(MD5 hash "${lines}")
 
-    set(STR_CPP_DECL "\n    const ProgramEntry ${cl_filename}\n    (\n        \"${cl_filename}\"\n,\n        \"${lines},\n        \"${hash}\"\n    );\n\n")
+    set(STR_CPP_DECL "\nconst ProgramEntry ${cl_filename}\n(\n\"${cl_filename}\"\n,\n\"${lines},\n\"${hash}\"\n);\n\n")
     
-    set(STR_HPP_DECL "\n    extern const ProgramEntry ${cl_filename};\n")
+    set(STR_HPP_DECL "\nextern const ProgramEntry ${cl_filename};\n")
 
     set(STR_CPP "${STR_CPP}${STR_CPP_DECL}")
     set(STR_HPP "${STR_HPP}${STR_HPP_DECL}")
 endforeach()
-
-set(STR_CPP "${STR_CPP}}")
-
-set(STR_HPP "${STR_HPP}}")
 
 file(WRITE "${DIR_OUT}/Source/${FILE_OUT}" "${STR_CPP}")
 
