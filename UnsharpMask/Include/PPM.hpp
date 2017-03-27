@@ -1,12 +1,6 @@
 #pragma once
 
-#include <vector>
-#include <cstdint>
-#include <sstream>
-#include <algorithm>
-#include <functional>
-
-class PPMImage
+class UNSHARP_MASK_PUBLIC PPM
 {
 public:
 
@@ -28,7 +22,7 @@ public:
         MaxCount
     };
 
-    PPMImage(Mode mode = Mode::ASCII);
+    PPM(Mode mode = Mode::ASCII);
 
     bool create(std::int32_t width, std::int32_t height, Format format = Format::RGB);
 
@@ -38,6 +32,10 @@ public:
 
     bool destroy();
 
+    Mode getMode() const;
+
+    Format getFormat() const;
+
     std::uint32_t getWidth() const;
 
     std::uint32_t getHeight() const;
@@ -46,11 +44,7 @@ public:
 
     void* getData() const;
 
-    bool operator==(const PPMImage& other);
-
-    friend std::ostream &operator<<(std::ostream& output, const PPMImage& other);
-
-    friend std::istream &operator>>(std::istream& input, PPMImage& other);
+    bool operator==(const PPM& other);
 
 private:
 
@@ -69,3 +63,7 @@ private:
     std::size_t getChannels(Format format) const;
 
 };
+
+UNSHARP_MASK_PUBLIC std::ostream& operator<<(std::ostream& output, const PPM& other);
+
+UNSHARP_MASK_PUBLIC std::istream& operator>>(std::istream& input, PPM& other);

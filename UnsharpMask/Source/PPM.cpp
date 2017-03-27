@@ -1,11 +1,13 @@
-#include "PPMImage.hpp"
+#include "Config.hpp"
 
-PPMImage::PPMImage(Mode mode)
+#include "PPM.hpp"
+
+PPM::PPM(Mode mode)
     : ready(false), mode(mode), width(0), height(0)
 {
 }
 
-bool PPMImage::create(std::int32_t width, std::int32_t height, Format format)
+bool PPM::create(std::int32_t width, std::int32_t height, Format format)
 {
     if (isReady())
     {
@@ -32,12 +34,12 @@ bool PPMImage::create(std::int32_t width, std::int32_t height, Format format)
     return true;
 }
 
-bool PPMImage::isReady() const
+bool PPM::isReady() const
 {
     return ready;
 }
 
-bool PPMImage::convert(Format format)
+bool PPM::convert(Format format)
 {
     if (!isReady())
     {
@@ -74,7 +76,7 @@ bool PPMImage::convert(Format format)
     return true;
 }
 
-bool PPMImage::destroy()
+bool PPM::destroy()
 {
     if (!isReady())
     {
@@ -94,48 +96,58 @@ bool PPMImage::destroy()
     return true;
 }
 
-std::uint32_t PPMImage::getWidth() const
+PPM::Mode PPM::getMode() const
+{
+    return mode;
+}
+
+PPM::Format PPM::getFormat() const
+{
+    return format;
+}
+
+std::uint32_t PPM::getWidth() const
 {
     return width;
 }
 
-std::uint32_t PPMImage::getHeight() const
+std::uint32_t PPM::getHeight() const
 {
     return height;
 }
 
-std::uint32_t PPMImage::getSize() const
+std::uint32_t PPM::getSize() const
 {
     return width * height * getChannels(format);
 }
 
-void * PPMImage::getData() const
+void * PPM::getData() const
 {
     return (void*)data.data();
 }
 
-bool PPMImage::operator==(const PPMImage & other)
+bool PPM::operator==(const PPM & other)
 {
     return std::equal(data.begin(), data.end(), other.data.begin());
 }
 
-std::size_t PPMImage::getChannels(Format format) const
+std::size_t PPM::getChannels(Format format) const
 {
     std::size_t result;
 
     switch (format)
     {
-        case PPMImage::Format::INTENSITY: result = 1; break;
-        case PPMImage::Format::LUMINANCE: result = 1; break;
-        case PPMImage::Format::RGB: result = 3; break;
-        case PPMImage::Format::RGBA: result = 4; break;
+        case PPM::Format::INTENSITY: result = 1; break;
+        case PPM::Format::LUMINANCE: result = 1; break;
+        case PPM::Format::RGB: result = 3; break;
+        case PPM::Format::RGBA: result = 4; break;
         default: throw std::runtime_error("Unsupported image format!");
     }
 
     return result;
 }
 
-std::ostream& operator<<(std::ostream& output, const PPMImage& image)
+std::ostream& operator<<(std::ostream& output, const PPM& image)
 {
     if (!image.isReady())
     {
@@ -145,23 +157,23 @@ std::ostream& operator<<(std::ostream& output, const PPMImage& image)
     std::int32_t num;
     std::int32_t max;
 
-    switch (image.format)
+    switch (image.getFormat())
     {
-        case PPMImage::Format::INTENSITY: 
+        case PPM::Format::INTENSITY: 
         {
             num = 1;
             max = 1;
         }
         break;
 
-        case PPMImage::Format::LUMINANCE: 
+        case PPM::Format::LUMINANCE: 
         {
             num = 2;
             max = std::numeric_limits<std::uint8_t>::max();
         }
         break;
 
-        case PPMImage::Format::RGB:
+        case PPM::Format::RGB:
         {
             num = 3;
             max = std::numeric_limits<std::uint8_t>::max();
@@ -171,30 +183,28 @@ std::ostream& operator<<(std::ostream& output, const PPMImage& image)
         default: throw std::runtime_error("Unsuported format to save PPM file!");
     }
 
-    if (image.mode == PPMImage::Mode::Binary)
+    if (image.getMode() == PPM::Mode::Binary)
     {
         num += 3;
     }
 
     output << 'P' << std::to_string(num) << std::endl
-        << image.width << " " << image.height << std::endl
+        << image.getWidth() << " " << image.getHeight() << std::endl
         << max << std::endl;
 
-    if (image.mode == PPMImage::Mode::Binary)
+    if (image.getMode() == PPM::Mode::Binary)
     {
-        output.write((char*)&image.data[0], image.getSize());
+        output.write(static_cast<char*>(image.getData()), image.getSize());
     }
     else
     {
-        unsigned data;
         std::size_t count = 0;
         std::size_t size = image.getSize();
+        unsigned* data = static_cast<unsigned*>(image.getData());
 
         while (count < size)
         {
-            data = image.data[count++];
-
-            output << data << ' ';
+            output << data[count++] << ' ';
 
             if (count % 18 == 0)
             {
@@ -202,11 +212,11 @@ std::ostream& operator<<(std::ostream& output, const PPMImage& image)
             }
         }
     }
-
+    
     return output;
 }
 
-std::istream& operator>>(std::istream& input, PPMImage& image)
+std::istream& operator>>(std::istream& input, PPM& image)
 {
     std::string magic;
     input >> magic;
@@ -224,29 +234,25 @@ std::istream& operator>>(std::istream& input, PPMImage& image)
     std::string max;
     input >> max;
 
-    PPMImage::Format format;
+    PPM::Format format;
 
     switch (num)
     {
         case 6:
-        case 3: format = PPMImage::Format::RGB; break;
+        case 3: format = PPM::Format::RGB; break;
 
         case 5:
-        case 2: format = PPMImage::Format::LUMINANCE; break;
+        case 2: format = PPM::Format::LUMINANCE; break;
 
         case 4:
-        case 1: format = PPMImage::Format::INTENSITY; break;
+        case 1: format = PPM::Format::INTENSITY; break;
 
         default: throw std::runtime_error("Invalid PPM image format!");
     }
 
     if (num > 3)
     {
-        image.mode = PPMImage::Mode::Binary;
-    }
-    else
-    {
-        image.mode = PPMImage::Mode::ASCII;
+        image = PPM(PPM::Mode::Binary);
     }
 
     if (!image.create(std::stoi(width), std::stoi(height), format))
@@ -254,23 +260,24 @@ std::istream& operator>>(std::istream& input, PPMImage& image)
         return input;
     }
 
-    if (image.mode == PPMImage::Mode::Binary)
+    if (image.getMode() == PPM::Mode::Binary)
     {
-        input.read((char*)&image.data[0], image.getSize());
+        input.read(static_cast<char*>(image.getData()), image.getSize());
     }
     else
     {
-        unsigned data;
+        unsigned byte;
         std::size_t count = 0;
         std::size_t size = image.getSize();
+        std::uint8_t* data = static_cast<std::uint8_t*>(image.getData());
 
         while (!input.eof() && count < size)
         {
-            input >> std::skipws >> data;
+            input >> std::skipws >> byte;
 
-            image.data[count++] = data;
+            data[count++] = byte;
         }
     }
-
+    
     return input;
 }
