@@ -31,6 +31,7 @@ set_directory_properties (PROPERTIES EP_BASE "${CMAKE_BINARY_DIR}/ExternalProjec
 ###############################################################################
 
 add_subdirectory ("${CMAKE_SOURCE_DIR}/UnsharpMask")
+add_subdirectory ("${CMAKE_SOURCE_DIR}/ImageViewer")
 
 ###############################################################################
 #   INSTALL
