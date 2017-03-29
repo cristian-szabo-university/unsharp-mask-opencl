@@ -36,6 +36,8 @@ public:
 
     Format getFormat() const;
 
+    std::size_t getChannels() const;
+
     std::uint32_t getWidth() const;
 
     std::uint32_t getHeight() const;
@@ -43,6 +45,10 @@ public:
     std::size_t getSize() const;
 
     void* getData() const;
+
+    void setPixel(std::uint32_t x, std::uint32_t y, const std::vector<std::uint8_t>& pixel);
+
+    std::vector<std::uint8_t> getPixel(std::uint32_t x, std::uint32_t y) const;
 
     bool operator==(const PPM& other);
 
@@ -52,15 +58,17 @@ private:
 
     Mode mode;
 
+    Format format;
+
     std::int32_t width;
 
     std::int32_t height;
 
-    Format format;
+    std::int32_t channels;
 
     std::vector<std::uint8_t> data;
 
-    std::size_t getChannels(Format format) const;
+    std::int32_t getChannels(Format format) const;
 
 };
 

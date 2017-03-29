@@ -2,6 +2,8 @@ project (UnsharpMask)
 
 include (GenerateExportHeader)
 
+find_package (glew REQUIRED CONFIG PATHS ${DEPENDENCIES_PATH})
+
 find_package (OpenCL_CLHPP REQUIRED)
 find_package (OpenCL_Headers REQUIRED)
 find_package (OpenCL_ICD_Loader REQUIRED)
@@ -15,19 +17,60 @@ configure_file (
 	${CMAKE_CURRENT_BINARY_DIR}/Include/Config.hpp @ONLY)
     
 file (GLOB HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Include/*.hpp")
+file (GLOB IMAGE_FILTER_HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Include/ImageFilter/*.hpp")
+file (GLOB SERIAL_FILTER_HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Include/ImageFilter/Serial/*.hpp")
+file (GLOB PARALLEL_FILTER_HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Include/ImageFilter/Parallel/*.hpp")
+file (GLOB IMAGE_PROCESS_HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Include/ImageProcess/*.hpp")
+file (GLOB SERIAL_IMAGE_PROCESS_HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Include/ImageProcess/Serial/*.hpp")
+file (GLOB PARALLEL_IMAGE_PROCESS_HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Include/ImageProcess/Parallel/*.hpp")
 
 list (APPEND HEADER_FILES
     ${CMAKE_CURRENT_BINARY_DIR}/Include/ProgramEntry.hpp
     ${CMAKE_CURRENT_BINARY_DIR}/Include/Config.hpp
     ${CMAKE_CURRENT_BINARY_DIR}/Include/Export.hpp)
- 
+
+source_group ("Include\\" FILES ${HEADER_FILES})
+source_group ("Include\\ImageFilter\\" FILES ${IMAGE_FILTER_HEADER_FILES})
+source_group ("Include\\ImageFilter\\Serial\\" FILES ${SERIAL_FILTER_HEADER_FILES})
+source_group ("Include\\ImageFilter\\Parallel\\" FILES ${PARALLEL_FILTER_HEADER_FILES})
+source_group ("Include\\ImageProcess\\" FILES ${IMAGE_PROCESS_HEADER_FILES})
+source_group ("Include\\ImageProcess\\Serial\\" FILES ${SERIAL_IMAGE_PROCESS_HEADER_FILES})
+source_group ("Include\\ImageProcess\\Parallel\\" FILES ${PARALLEL_IMAGE_PROCESS_HEADER_FILES})
+
+list (APPEND HEADER_FILES
+    ${IMAGE_FILTER_HEADER_FILES}
+    ${SERIAL_FILTER_HEADER_FILES}
+    ${PARALLEL_FILTER_HEADER_FILES}
+    ${IMAGE_PROCESS_HEADER_FILES}
+    ${SERIAL_IMAGE_PROCESS_HEADER_FILES}
+    ${PARALLEL_IMAGE_PROCESS_HEADER_FILES})
+
 file (GLOB SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Source/*.cpp")
+file (GLOB IMAGE_FILTER_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Source/ImageFilter/*.cpp")
+file (GLOB SERIAL_FILTER_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Source/ImageFilter/Serial/*.cpp")
+file (GLOB PARALLEL_FILTER_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Source/ImageFilter/Parallel/*.cpp")
+file (GLOB IMAGE_PROCESS_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Source/ImageProcess/*.cpp")
+file (GLOB SERIAL_IMAGE_PROCESS_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Source/ImageProcess/Serial/*.cpp")
+file (GLOB PARALLEL_IMAGE_PROCESS_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Source/ImageProcess/Parallel/*.cpp")
 
 list (APPEND SOURCE_FILES
     ${CMAKE_CURRENT_BINARY_DIR}/Source/ProgramEntry.cpp)
 
-source_group ("Include\\" FILES ${HEADER_FILES})
 source_group ("Source\\" FILES ${SOURCE_FILES})
+source_group ("Source\\ImageFilter\\" FILES ${IMAGE_FILTER_SOURCE_FILES})
+source_group ("Source\\ImageFilter\\Serial\\" FILES ${SERIAL_FILTER_SOURCE_FILES})
+source_group ("Source\\ImageFilter\\Parallel\\" FILES ${PARALLEL_FILTER_SOURCE_FILES})
+source_group ("Source\\ImageProcess\\" FILES ${IMAGE_PROCESS_SOURCE_FILES})
+source_group ("Source\\ImageProcess\\Serial\\" FILES ${SERIAL_IMAGE_PROCESS_SOURCE_FILES})
+source_group ("Source\\ImageProcess\\Parallel\\" FILES ${PARALLEL_IMAGE_PROCESS_SOURCE_FILES})
+
+list (APPEND SOURCE_FILES
+    ${IMAGE_FILTER_SOURCE_FILES}
+    ${SERIAL_FILTER_SOURCE_FILES}
+    ${PARALLEL_FILTER_SOURCE_FILES}
+    ${IMAGE_PROCESS_SOURCE_FILES}
+    ${SERIAL_IMAGE_PROCESS_SOURCE_FILES}
+    ${PARALLEL_IMAGE_PROCESS_SOURCE_FILES})
 
 add_library (${PROJECT_NAME} SHARED ${HEADER_FILES} ${SOURCE_FILES})
 
@@ -36,7 +79,7 @@ target_include_directories (${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/Include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
-target_link_libraries (${PROJECT_NAME} PUBLIC OpenCL_CLHPP OpenCL_Headers OpenCL_ICD_Loader)
+target_link_libraries (${PROJECT_NAME} PUBLIC OpenCL_CLHPP OpenCL_Headers OpenCL_ICD_Loader GLEW::glew_s)
 
 generate_export_header(${PROJECT_NAME}
 	EXPORT_MACRO_NAME "UNSHARP_MASK_PUBLIC"

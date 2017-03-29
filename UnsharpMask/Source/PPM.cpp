@@ -3,7 +3,7 @@
 #include "PPM.hpp"
 
 PPM::PPM(Mode mode)
-    : ready(false), mode(mode), width(0), height(0)
+    : ready(false), mode(mode), width(0), height(0), channels(0)
 {
 }
 
@@ -25,7 +25,7 @@ bool PPM::create(std::int32_t width, std::int32_t height, Format format)
 
     this->height = height;
 
-    std::size_t channels = getChannels(format);
+    channels = getChannels(format);
 
     data.resize(width * height * channels);
 
@@ -51,27 +51,25 @@ bool PPM::convert(Format format)
         return true;
     }
 
-    std::size_t size = width * height;
-    std::size_t new_channels = getChannels(format);
-    std::size_t old_channels = getChannels(this->format);
-    std::vector<std::uint8_t> new_data;
-    new_data.resize(size * new_channels);
+    std::int32_t size = width * height;
+    std::int32_t new_channels = getChannels(format);
+    std::vector<std::uint8_t> new_data(size * new_channels, 0);
 
-    std::size_t channels = std::min(old_channels, new_channels);
+    std::int32_t steps = std::min(channels, new_channels);
 
-    for (std::size_t i = 0; i < size; i++)
+    for (std::int32_t i = 0; i < size; i++)
     {
-        for (std::size_t j = 0; j < channels; j++)
+        for (std::int32_t j = 0; j < steps; j++)
         {
-            new_data[i * new_channels + j] = data[i * old_channels + j];
+            new_data[i * new_channels + j] = data[i * channels + j];
         }
     }
 
     data.clear();
 
-    this->format = format;
-
     data.assign(new_data.begin(), new_data.end());
+
+    this->format = format;
 
     return true;
 }
@@ -106,6 +104,11 @@ PPM::Format PPM::getFormat() const
     return format;
 }
 
+std::size_t PPM::getChannels() const
+{
+    return channels;
+}
+
 std::uint32_t PPM::getWidth() const
 {
     return width;
@@ -126,14 +129,30 @@ void * PPM::getData() const
     return (void*)data.data();
 }
 
+void PPM::setPixel(std::uint32_t x, std::uint32_t y, const std::vector<std::uint8_t>& pixel)
+{
+    const std::uint32_t offset = (y * width + x) * channels;
+
+    std::copy(pixel.begin(), pixel.end(), data.begin() + offset);
+}
+
+std::vector<std::uint8_t> PPM::getPixel(std::uint32_t x, std::uint32_t y) const
+{
+    const std::uint32_t offset = (y * width + x) * channels;
+
+    return std::vector<std::uint8_t>(
+        data.begin() + offset,
+        data.begin() + offset + channels);
+}
+
 bool PPM::operator==(const PPM & other)
 {
     return std::equal(data.begin(), data.end(), other.data.begin());
 }
 
-std::size_t PPM::getChannels(Format format) const
+std::int32_t PPM::getChannels(Format format) const
 {
-    std::size_t result;
+    std::int32_t result;
 
     switch (format)
     {
