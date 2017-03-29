@@ -1,24 +1,222 @@
-#include "UnsharpMask.hpp"
+#include "Config.hpp"
+
+#include "GL\glew.h"
+#include "GLFW\glfw3.h"
 
 #include "Program.hpp"
 
-#include "Config.hpp"
+#include "App.hpp"
 
+Program::Program() : ready(false)
+{
+}
+
+Program::~Program()
+{
+    if (isReady())
+    {
+        destroy();
+    }
+}
+
+bool Program::create()
+{
+    if (isReady())
+    {
+        return false;
+    }
+
+    if (!glfwInit())
+    {
+        std::cerr << "Failed to initialise GLFW library!\n";
+
+        return false;
+    }
+
+    ready = !ready;
+
+    return true;
+}
+
+bool Program::isReady()
+{
+    return ready;
+}
+
+bool Program::execute(std::shared_ptr<App> app)
+{
+    if (!isReady() || !app)
+    {
+        return false;
+    }
+
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+
+    GLFWwindow* window = glfwCreateWindow(
+        app->getWidth(), app->getHeight(), 
+        app->getName().c_str(), 
+        NULL, NULL);
+
+    if (!window)
+    {
+        std::cerr << "Failed to create window!\n";
+
+        return false;
+    }
+
+    glfwMakeContextCurrent(window);
+
+    glewExperimental = GL_TRUE;
+
+    if (glewInit() != GLEW_OK)
+    {
+        std::cerr << "Failed to initialise GLEW library!\n";
+
+        return false;
+    }
+
+    glfwSetWindowUserPointer(window, app.get());
+    glfwSetWindowCloseCallback(window, window_close_callback);
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetKeyCallback(window, key_callback);
+
+    if (!app->onInit())
+    {
+        std::cerr << "Failed to initialise application!\n";
+
+        return false;
+    }
+
+    glfwMakeContextCurrent(NULL);
+
+    apps.insert(std::make_pair(app, window));
+
+    return true;
+}
+
+void Program::loop()
+{
+    std::size_t window_active = apps.size();
+
+    while (window_active)
+    {
+        for (auto& app : apps)
+        {
+            if (glfwWindowShouldClose(app.second))
+            {
+                continue;
+            }
+
+            glfwMakeContextCurrent(app.second);
+
+            if (glfwGetWindowAttrib(app.second, GLFW_VISIBLE) == GLFW_FALSE)
+            {
+                glfwShowWindow(app.second);
+            }
+
+            if (!app_process(app.first))
+            {
+                glfwSetWindowShouldClose(app.second, GLFW_TRUE);
+            }
+        }
+
+        for (auto& app : apps)
+        {
+            glfwSwapBuffers(app.second);
+        }
+
+        glfwPollEvents();
+
+        window_active = std::count_if(apps.begin(), apps.end(),
+            [](auto app)
+        {
+            return !glfwWindowShouldClose(app.second);
+        });
+    }
+}
+
+bool Program::destroy()
+{
+    if (!isReady())
+    {
+        return false;
+    }
+
+    for (auto& app : apps)
+    {
+        app.first->onClose();
+
+        glfwDestroyWindow(app.second);
+    }
+
+    glfwTerminate();
+
+    apps.clear();
+
+    ready = !ready;
+
+    return true;
+}
+
+bool Program::app_process(std::shared_ptr<App> app)
+{
+    bool result = true;
+
+    try
+    {
+        if (app->onUpdate(glfwGetTime()))
+        {
+            app->onRender();
+        }
+        else
+        {
+            result = false;
+        }
+    }
+    catch (std::exception& ex)
+    {
+        std::cerr << "Exception: " << ex.what() << std::endl;
+
+        result = false;
+    }
+
+    return result;
+}
+
+void Program::key_callback(GLFWwindow * window, int key, int scancode, int action, int mods)
+{
+    App* app = static_cast<App*>(glfwGetWindowUserPointer(window));
+
+    app->onKey(key, scancode, action, mods);
+}
+
+void Program::framebuffer_size_callback(GLFWwindow * window, int width, int height)
+{
+    App* app = static_cast<App*>(glfwGetWindowUserPointer(window));
+
+    app->onResize(width, height);
+}
+
+void Program::window_close_callback(GLFWwindow * window)
+{
+    glfwSetWindowShouldClose(window, GLFW_TRUE);
+}
+
+/*
 void Program::create(std::vector<std::string> cli, GLFWwindow* window)
 {
     this->window = window;
 
-    /*
     auto args = docopt::docopt(R"(
     Usage:
-        visualiser (serial|parallel) <input_file> <output_file>
-        visualiser (-h | --help)
-        visualiser --version
+        image_viewer (serial|parallel) <input_file> <output_file> [--radius=<value>]
+        image_viewer (-h | --help)
+        image_viewer --version
 
     Options:
         --help      Show this screen.
         --version   Show version.
-    )", cli, true, "Visualiser 1.0.0");
+    )", cli, true, "ImageViewer 1.0.0");
 
     std::string input_filename = args["<input_file>"].asString();
     std::string output_filename = args["<output_file>"].asString();
@@ -66,9 +264,8 @@ void Program::create(std::vector<std::string> cli, GLFWwindow* window)
 
         std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
     }
-    */
 
-    std::ifstream first_file("lena.ppm", std::ios::in);
+    std::ifstream first_file(input_filename, std::ios::in);
     if (!first_file.is_open())
     {
         throw std::runtime_error("Image not found!");
@@ -76,19 +273,7 @@ void Program::create(std::vector<std::string> cli, GLFWwindow* window)
 
     first_file >> image;
 
-    glGenTextures(1, &sharp_tex);
 
-    glBindTexture(GL_TEXTURE_2D, sharp_tex);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, image.getWidth(), image.getHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, image.getData());
-
-    glBindTexture(GL_TEXTURE_2D, 0);
 
     onResizeEvent(1280, 720);
 }
@@ -97,7 +282,7 @@ void Program::render()
 {
     glClear(GL_COLOR_BUFFER_BIT);
 
-    glBindTexture(GL_TEXTURE_2D, sharp_tex);
+    glBindTexture(GL_TEXTURE_2D, proc->getTexture());
     glEnable(GL_TEXTURE_2D);
 
     glBegin(GL_QUADS);
@@ -113,7 +298,6 @@ void Program::render()
 
 void Program::destroy()
 {
-    glDeleteTextures(1, &sharp_tex);
 }
 
 void Program::onResizeEvent(int width, int height)
@@ -164,7 +348,6 @@ void Program::onKeyEvent(int key, int scancode, int action, int mod)
     }
 }
 
-/*
 int Program::run(GLFWwindow* window)
 {
     cl_int err = CL_SUCCESS;
@@ -450,7 +633,6 @@ int Program::run(GLFWwindow* window)
 
     return 0;
 }
-*/
 
 std::vector<float> Program::createGaussianFilter(std::int32_t radius, float sigma)
 {
@@ -481,3 +663,4 @@ std::vector<float> Program::createGaussianFilter(std::int32_t radius, float sigm
 
     return result;
 }
+*/

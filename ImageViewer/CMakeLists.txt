@@ -2,7 +2,6 @@ project (ImageViewer)
 
 find_package (docopt REQUIRED CONFIG PATHS ${DEPENDENCIES_PATH})
 find_package (glfw3 REQUIRED CONFIG PATHS ${DEPENDENCIES_PATH})
-find_package (glew REQUIRED CONFIG PATHS ${DEPENDENCIES_PATH})
 
 find_package (OpenGL REQUIRED)
 
@@ -25,7 +24,7 @@ add_executable (${PROJECT_NAME} ${HEADER_FILES} ${SOURCE_FILES})
 target_include_directories (${PROJECT_NAME} PUBLIC  
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Include>)
 
-target_link_libraries (${PROJECT_NAME} PUBLIC UnsharpMask OpenGL glfw GLEW::glew_s docopt_s)
+target_link_libraries (${PROJECT_NAME} PUBLIC UnsharpMask OpenGL glfw docopt_s)
 
 add_custom_command (TARGET ${PROJECT_NAME} 
     POST_BUILD 

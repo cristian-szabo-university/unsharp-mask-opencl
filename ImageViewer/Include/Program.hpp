@@ -1,35 +1,37 @@
 #pragma once
 
-#include "UnsharpMask.hpp"
-
-#include "docopt.h"
-#include "GL\glew.h"
-#include "GLFW\glfw3.h"
+class App;
 
 class Program
 {
 public:
 
-    void create(std::vector<std::string> cli, GLFWwindow* window);
+    Program();
 
-    void render();
+    ~Program();
 
-    void destroy();
+    bool create();
 
-    void onResizeEvent(int width, int height);
+    bool isReady();
 
-    void onKeyEvent(int key, int scancode, int action, int mod);
+    bool execute(std::shared_ptr<App> app);
+
+    void loop();
+
+    bool destroy();
 
 private:
 
-    GLFWwindow* window;
+    bool ready;
 
-    PPM image;
+    std::map<std::shared_ptr<App>, GLFWwindow*> apps;
 
-    cl::Image* orig_tex;
+    bool app_process(std::shared_ptr<App> app);
 
-    cl_GLuint sharp_tex;
+    static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-    std::vector<float> createGaussianFilter(std::int32_t radius, float sigma);
+    static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+
+    static void window_close_callback(GLFWwindow* window);
 
 };
