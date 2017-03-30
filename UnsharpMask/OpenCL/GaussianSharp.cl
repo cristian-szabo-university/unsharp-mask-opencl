@@ -1,4 +1,4 @@
-__kernel void gaussian_sharp_filter(image2d_t input, __constant float* filter, image2d_t output)
+__kernel void gaussian_sharp_filter(__read_only image2d_t input, __constant float* filter, __write_only image2d_t output)
 {
     const sampler_t smp = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP_TO_EDGE | CLK_FILTER_LINEAR;
     

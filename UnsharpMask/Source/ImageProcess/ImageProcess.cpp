@@ -62,11 +62,11 @@ std::uint64_t ImageProcess::execute(const PPM & image)
 
     for (auto& filter : filters)
     {
-        onBeforeFilter(filter, objectId);
+        filter->onBefore(objectId);
 
-        exec_time += onApplyFilter(filter, copy);
+        exec_time += filter->onApply(copy);
 
-        onAfterFilter(filter);
+        filter->onAfter();
     }
 
     onAfterExecute();
@@ -80,22 +80,10 @@ bool ImageProcess::destroy()
     {
         return false;
     }
-    /*
-    if (texId)
-    {
-        glDeleteTextures(1, &texId);
 
-        texId = 0;
-    }
-    */
     ready = !ready;
 
     return true;
-}
-
-std::uint64_t ImageProcess::onApplyFilter(std::shared_ptr<ImageFilter> filter, const PPM& image)
-{
-    return filter->onApply(image);
 }
 
 void ImageProcess::setObjectGL(std::uint32_t objectId)
@@ -110,61 +98,3 @@ void ImageProcess::onBeforeExecute(PPM & image)
 void ImageProcess::onAfterExecute()
 {
 }
-
-void ImageProcess::onBeforeFilter(std::shared_ptr<ImageFilter> filter, std::uint32_t texId)
-{
-    filter->onBefore(texId);
-}
-
-void ImageProcess::onAfterFilter(std::shared_ptr<ImageFilter> filter)
-{
-    filter->onAfter();
-}
-
-/*
-GLint internalFormat;
-GLenum format;
-
-
-if (texId)
-{
-glDeleteTextures(1, &texId);
-
-texId = 0;
-}
-
-switch (image.getFormat())
-{
-case PPM::Format::RGBA:
-internalFormat = GL_RGBA8;
-format = GL_RGBA;
-break;
-
-case PPM::Format::RGB:
-internalFormat = GL_RGB8;
-format = GL_RGB;
-break;
-
-case PPM::Format::INTENSITY:
-case PPM::Format::LUMINANCE:
-internalFormat = GL_R8;
-format = GL_R;
-break;
-
-default: throw std::runtime_error("Invalid image format!");
-}
-
-glGenTextures(1, &texId);
-
-glBindTexture(GL_TEXTURE_2D, texId);
-
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, image.getWidth(), image.getHeight(), 0, format, GL_UNSIGNED_BYTE, image.getData());
-
-glBindTexture(GL_TEXTURE_2D, 0);
-*/

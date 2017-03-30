@@ -4,10 +4,6 @@
 
 #include "ImageProcess\Serial\SerialBlurSharpProcess.hpp"
 
-#include "GL\glew.h"
-
-#include "Utility.hpp"
-
 SerialBlurFilter::SerialBlurFilter()
 {
 }
@@ -96,31 +92,9 @@ std::uint64_t SerialBlurFilter::onApply(const PPM & image)
 
 void SerialBlurFilter::onAfter()
 {
-    GLint internalFormat;
-    GLenum format;
-
-    switch (result.getFormat())
-    {
-        case PPM::Format::RGBA:
-            internalFormat = GL_RGBA8;
-            format = GL_RGBA;
-            break;
-
-        case PPM::Format::RGB:
-            internalFormat = GL_RGB8;
-            format = GL_RGB;
-            break;
-
-        case PPM::Format::INTENSITY:
-        case PPM::Format::LUMINANCE:
-            internalFormat = GL_R8;
-            format = GL_R;
-            break;
-
-        default: throw std::runtime_error("Invalid image format!");
-    }
-
-    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, result.getWidth(), result.getHeight(), 0, format, GL_UNSIGNED_BYTE, result.getData());
+    glTexImage2D(GL_TEXTURE_2D, 0, result.getGLInternalFormat(), 
+        result.getWidth(), result.getHeight(), 0, 
+        result.getGLFormat(), GL_UNSIGNED_BYTE, result.getData());
 
     glBindTexture(GL_TEXTURE_2D, 0);
 }

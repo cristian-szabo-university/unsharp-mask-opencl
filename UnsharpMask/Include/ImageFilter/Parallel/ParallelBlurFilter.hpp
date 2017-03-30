@@ -20,4 +20,16 @@ protected:
 
     virtual void onAfter() override;
 
+private:
+
+    cl::Context context;
+
+    cl::CommandQueue queue;
+
+    cl::Kernel kernel;
+
+    cl::ImageGL output;
+
+    bool first_run;
+
 };

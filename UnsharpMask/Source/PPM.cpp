@@ -104,6 +104,38 @@ PPM::Format PPM::getFormat() const
     return format;
 }
 
+std::int32_t PPM::getGLFormat() const
+{
+    GLint result;
+
+    switch (format)
+    {
+        case Format::R: result = GL_R; break;
+        case Format::RG: result = GL_RG; break;
+        case Format::RGB: result = GL_RGB; break;
+        case Format::RGBA: result = GL_RGBA; break;
+        default: throw std::runtime_error("Invalid image format!");
+    }
+
+    return result;
+}
+
+std::uint32_t PPM::getGLInternalFormat() const
+{
+    GLenum result;
+
+    switch (format)
+    {
+        case Format::R: result = GL_R8; break;
+        case Format::RG: result = GL_RG8; break;
+        case Format::RGB: result = GL_RGB8; break;
+        case Format::RGBA: result = GL_RGBA8; break;
+        default: throw std::runtime_error("Invalid image format!");
+    }
+
+    return result;
+}
+
 std::size_t PPM::getChannels() const
 {
     return channels;
@@ -121,10 +153,10 @@ std::uint32_t PPM::getHeight() const
 
 std::uint32_t PPM::getSize() const
 {
-    return width * height * getChannels(format);
+    return width * height * channels;
 }
 
-void * PPM::getData() const
+void* PPM::getData() const
 {
     return (void*)data.data();
 }
@@ -156,8 +188,8 @@ std::int32_t PPM::getChannels(Format format) const
 
     switch (format)
     {
-        case PPM::Format::INTENSITY: result = 1; break;
-        case PPM::Format::LUMINANCE: result = 1; break;
+        case PPM::Format::R: result = 1; break;
+        case PPM::Format::RG: result = 2; break;
         case PPM::Format::RGB: result = 3; break;
         case PPM::Format::RGBA: result = 4; break;
         default: throw std::runtime_error("Unsupported image format!");
@@ -173,29 +205,30 @@ std::ostream& operator<<(std::ostream& output, const PPM& image)
         return output;
     }
 
-    std::int32_t num;
-    std::int32_t max;
+    if (image.getFormat() == PPM::Format::RGBA ||
+        image.getFormat() == PPM::Format::RG)
+    {
+        std::cerr << "Error: Image format not compatible with PPM format!\n";
+        std::cerr << "Convert to a suitable fromat before writting!\n";
+
+        return output;
+    }
+   
+    std::int32_t max = std::numeric_limits<std::uint8_t>::max();
+
+    std::int32_t ppm_id;
 
     switch (image.getFormat())
     {
-        case PPM::Format::INTENSITY: 
+        case PPM::Format::R: 
         {
-            num = 1;
-            max = 1;
-        }
-        break;
-
-        case PPM::Format::LUMINANCE: 
-        {
-            num = 2;
-            max = std::numeric_limits<std::uint8_t>::max();
+            ppm_id = 1;
         }
         break;
 
         case PPM::Format::RGB:
         {
-            num = 3;
-            max = std::numeric_limits<std::uint8_t>::max();
+            ppm_id = 3;
         }
         break;
 
@@ -204,10 +237,10 @@ std::ostream& operator<<(std::ostream& output, const PPM& image)
 
     if (image.getMode() == PPM::Mode::Binary)
     {
-        num += 3;
+        ppm_id += 3;
     }
 
-    output << 'P' << std::to_string(num) << std::endl
+    output << 'P' << std::to_string(ppm_id) << std::endl
         << image.getWidth() << " " << image.getHeight() << std::endl
         << max << std::endl;
 
@@ -237,6 +270,11 @@ std::ostream& operator<<(std::ostream& output, const PPM& image)
 
 std::istream& operator>>(std::istream& input, PPM& image)
 {
+    if (image.isReady())
+    {
+        return input;
+    }
+
     std::string magic;
     input >> magic;
 
@@ -245,7 +283,7 @@ std::istream& operator>>(std::istream& input, PPM& image)
         throw std::runtime_error("Invalid PPM header file!");
     }
 
-    std::uint32_t num = std::atoi(&magic[1]);
+    std::uint32_t ppm_id = std::atoi(&magic[1]);
     
     std::string width, height;
     input >> width >> height;
@@ -255,21 +293,20 @@ std::istream& operator>>(std::istream& input, PPM& image)
 
     PPM::Format format;
 
-    switch (num)
+    switch (ppm_id)
     {
         case 6:
         case 3: format = PPM::Format::RGB; break;
 
         case 5:
-        case 2: format = PPM::Format::LUMINANCE; break;
-
         case 4:
-        case 1: format = PPM::Format::INTENSITY; break;
-
+        case 2: 
+        case 1: format = PPM::Format::R; break;
+        
         default: throw std::runtime_error("Invalid PPM image format!");
     }
 
-    if (num > 3)
+    if (ppm_id > 3)
     {
         image = PPM(PPM::Mode::Binary);
     }
@@ -279,23 +316,33 @@ std::istream& operator>>(std::istream& input, PPM& image)
         return input;
     }
 
+    std::uint64_t read_bytes = 0;
+
     if (image.getMode() == PPM::Mode::Binary)
     {
         input.read(static_cast<char*>(image.getData()), image.getSize());
+
+        read_bytes = input.gcount();
     }
     else
-    {
-        unsigned byte;
-        std::size_t count = 0;
-        std::size_t size = image.getSize();
+    {     
         std::uint8_t* data = static_cast<std::uint8_t*>(image.getData());
 
-        while (!input.eof() && count < size)
+        unsigned byte;
+
+        while (!input.eof())
         {
             input >> std::skipws >> byte;
 
-            data[count++] = byte;
+            data[read_bytes++] = byte;
         }
+
+        --read_bytes;
+    }
+
+    if (read_bytes != image.getSize())
+    {
+        image.destroy();
     }
     
     return input;

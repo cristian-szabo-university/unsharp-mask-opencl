@@ -32,12 +32,6 @@ protected:
 
     virtual void onAfterExecute();
 
-    virtual void onBeforeFilter(std::shared_ptr<ImageFilter> filter, std::uint32_t objectId);
-
-    virtual std::uint64_t onApplyFilter(std::shared_ptr<ImageFilter> filter, const PPM & image);
-
-    virtual void onAfterFilter(std::shared_ptr<ImageFilter> filter);
-
 private:
 
     bool ready;

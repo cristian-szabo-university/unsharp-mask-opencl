@@ -4,8 +4,6 @@
 
 #include "ImageProcess\Parallel\ParallelGaussianSharpProcess.hpp"
 
-#include "GL\glew.h"
-
 ParallelGaussianSharpFilter::ParallelGaussianSharpFilter()
 {
 }
@@ -50,17 +48,14 @@ void ParallelGaussianSharpFilter::onBefore(std::uint32_t glTexId)
     std::vector<cl::Memory> objects;
     objects.push_back(output);
 
+    glFinish();
+
     queue.enqueueAcquireGLObjects(&objects);
 }
 
 std::uint64_t ParallelGaussianSharpFilter::onApply(const PPM & image)
 {
     cl::Event event;
-
-    cl::Image2D input1(context,
-        CL_MEM_READ_WRITE,
-        cl::ImageFormat(CL_RGBA, CL_UNORM_INT8),
-        image.getWidth(), image.getHeight());
 
     cl::size_t<3> origin;
     origin[0] = 0;
@@ -71,6 +66,11 @@ std::uint64_t ParallelGaussianSharpFilter::onApply(const PPM & image)
     region[0] = image.getWidth();
     region[1] = image.getHeight();
     region[2] = 1;
+
+    cl::Image2D input1(context,
+        CL_MEM_READ_WRITE,
+        cl::ImageFormat(CL_RGBA, CL_UNORM_INT8),
+        image.getWidth(), image.getHeight());
 
     queue.enqueueWriteImage(input1, CL_BLOCKING, origin, region, 0, 0, image.getData());
 
@@ -99,9 +99,9 @@ void ParallelGaussianSharpFilter::onAfter()
     std::vector<cl::Memory> objects;
     objects.push_back(output);
 
-    queue.enqueueReleaseGLObjects(&objects);
-
     queue.finish();
+
+    queue.enqueueReleaseGLObjects(&objects);
 }
 
 std::vector<float> ParallelGaussianSharpFilter::createFilter(std::int32_t radius, float sigma)

@@ -15,8 +15,8 @@ public:
     enum class Format
     {
         Invalid,
-        INTENSITY,
-        LUMINANCE,
+        R,
+        RG,
         RGB,
         RGBA,
         MaxCount
@@ -35,6 +35,10 @@ public:
     Mode getMode() const;
 
     Format getFormat() const;
+
+    std::int32_t getGLFormat() const;
+
+    std::uint32_t getGLInternalFormat() const;
 
     std::size_t getChannels() const;
 

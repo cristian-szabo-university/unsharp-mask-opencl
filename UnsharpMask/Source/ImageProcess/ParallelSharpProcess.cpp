@@ -71,13 +71,6 @@ bool ParallelSharpProcess::create()
 
         std::string build_log = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(devices[0]);
 
-        cl_build_status status = program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(devices[0]);
-
-        if (status != CL_BUILD_SUCCESS)
-        {
-            throw std::runtime_error("Program build failed!");
-        }
-
         throw std::runtime_error(build_log);
     }
 

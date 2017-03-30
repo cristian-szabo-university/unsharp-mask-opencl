@@ -4,10 +4,6 @@
 
 #include "ImageProcess\Serial\SerialBlurSharpProcess.hpp"
 
-#include "GL\glew.h"
-
-#include "Utility.hpp"
-
 SerialSharpFilter::SerialSharpFilter()
 {
 }
@@ -52,10 +48,11 @@ void SerialSharpFilter::onBefore(std::uint32_t glTexId)
 
     switch (internalFormat)
     {
-    case GL_RGBA8: format = PPM::Format::RGBA; break;
-    case GL_RGB8: format = PPM::Format::RGB; break;
-    case GL_R8: format = PPM::Format::INTENSITY; break;
-    default: throw std::runtime_error("Invalid image format!");
+        case GL_RGBA8: format = PPM::Format::RGBA; break;
+        case GL_RGB8: format = PPM::Format::RGB; break;
+        case GL_RG8: format = PPM::Format::RG; break;
+        case GL_R8: format = PPM::Format::R; break;
+        default: throw std::runtime_error("Invalid image format!");
     }
 
     previous.create(width, height, format);
@@ -66,6 +63,7 @@ void SerialSharpFilter::onBefore(std::uint32_t glTexId)
     {
         case GL_RGBA8: gl_format = GL_RGBA; break;
         case GL_RGB8: gl_format = GL_RGB; break;
+        case GL_RG8: gl_format = GL_RG; break;
         case GL_R8: gl_format = GL_R; break;
         default: throw std::runtime_error("Invalid image format!");
     }
@@ -106,31 +104,9 @@ std::uint64_t SerialSharpFilter::onApply(const PPM & image)
 
     auto end_time = std::chrono::high_resolution_clock::now();
 
-    GLint internalFormat;
-    GLenum format;
-
-    switch (image.getFormat())
-    {
-        case PPM::Format::RGBA:
-            internalFormat = GL_RGBA8;
-            format = GL_RGBA;
-            break;
-
-        case PPM::Format::RGB:
-            internalFormat = GL_RGB8;
-            format = GL_RGB;
-            break;
-
-        case PPM::Format::INTENSITY:
-        case PPM::Format::LUMINANCE:
-            internalFormat = GL_R8;
-            format = GL_R;
-            break;
-
-        default: throw std::runtime_error("Invalid image format!");
-    }
-
-    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, result.getWidth(), result.getHeight(), 0, format, GL_UNSIGNED_BYTE, result.getData());
+    glTexImage2D(GL_TEXTURE_2D, 0, result.getGLInternalFormat(), 
+        result.getWidth(), result.getHeight(), 0, 
+        result.getGLFormat(), GL_UNSIGNED_BYTE, result.getData());
 
     result.destroy();
 

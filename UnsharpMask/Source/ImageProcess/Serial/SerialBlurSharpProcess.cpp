@@ -5,8 +5,6 @@
 #include "ImageFilter\Serial\SerialBlurFilter.hpp"
 #include "ImageFilter\Serial\SerialSharpFilter.hpp"
 
-#include "GL\glew.h"
-
 SerialBlurSharpProcess::SerialBlurSharpProcess(std::uint32_t radius, float alpha, float beta, float gamma)
     : SharpProcess(radius, alpha, beta, gamma)
 {

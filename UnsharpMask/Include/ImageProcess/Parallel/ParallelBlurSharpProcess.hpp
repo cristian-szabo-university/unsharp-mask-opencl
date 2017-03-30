@@ -19,11 +19,13 @@ protected:
 
     virtual ProgramEntry getProgramSource() override;
 
-    virtual std::uint64_t onApplyFilter(std::shared_ptr<ImageFilter> filter, const PPM& image) override;
+    virtual void onBeforeExecute(PPM & image) override;
+
+    virtual void onAfterExecute() override;
 
 private:
 
-    PPM::Format saved_format;
+    std::uint32_t texId;
 
     bool bandwith_optimisation;
 

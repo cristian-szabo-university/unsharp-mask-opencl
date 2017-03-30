@@ -22,5 +22,3 @@
 
 #include "ImageProcess\Parallel\ParallelBlurSharpProcess.hpp"
 #include "ImageProcess\Parallel\ParallelGaussianSharpProcess.hpp"
-
-#include "Utility.hpp"
