@@ -41,4 +41,9 @@
 #   include <CL/cl.hpp>
 #endif
 
+#define NOMINMAX
+
+#include <GL/glew.h>
+#include <GL/wglew.h>
+
 #include "Export.hpp"
