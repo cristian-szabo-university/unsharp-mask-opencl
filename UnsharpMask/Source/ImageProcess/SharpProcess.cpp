@@ -2,8 +2,6 @@
 
 #include "ImageProcess\SharpProcess.hpp"
 
-#include "GL\glew.h"
-
 SharpProcess::SharpProcess(std::uint32_t radius, float alpha, float beta, float gamma)
     : radius(radius), alpha(alpha), beta(beta), gamma(gamma)
 {
@@ -54,9 +52,6 @@ bool SharpProcess::destroy()
 
 void SharpProcess::onBeforeExecute(PPM & image)
 {
-    GLint internalFormat;
-    GLenum format;
-
     std::uint32_t texId = getObjectGL();
 
     if (texId)
@@ -68,29 +63,6 @@ void SharpProcess::onBeforeExecute(PPM & image)
     
     glGenTextures(1, &texId);
 
-    setObjectGL(texId);
-
-    switch (image.getFormat())
-    {
-        case PPM::Format::RGBA:
-            internalFormat = GL_RGBA8;
-            format = GL_RGBA;
-            break;
-
-        case PPM::Format::RGB:
-            internalFormat = GL_RGB8;
-            format = GL_RGB;
-            break;
-
-        case PPM::Format::INTENSITY:
-        case PPM::Format::LUMINANCE:
-            internalFormat = GL_R8;
-            format = GL_R;
-            break;
-
-        default: throw std::runtime_error("Invalid image format!");
-    }
-  
     glBindTexture(GL_TEXTURE_2D, texId);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -99,7 +71,9 @@ void SharpProcess::onBeforeExecute(PPM & image)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, image.getWidth(), image.getHeight(), 0, format, GL_UNSIGNED_BYTE, image.getData());
+    glTexImage2D(GL_TEXTURE_2D, 0, image.getGLInternalFormat(), image.getWidth(), image.getHeight(), 0, image.getGLFormat(), GL_UNSIGNED_BYTE, image.getData());
 
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    setObjectGL(texId);
 }
