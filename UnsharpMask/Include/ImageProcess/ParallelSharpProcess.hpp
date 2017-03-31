@@ -18,11 +18,15 @@ public:
 
     virtual bool create() override;
 
+    virtual bool destroy() override;
+
 protected:
 
     void attachBuildOption(std::pair<std::string, std::string> opt);
 
     virtual ProgramEntry getProgramSource() = 0;
+
+    bool hasImageFormat(cl::ImageFormat format);
 
 private:
 
@@ -33,5 +37,7 @@ private:
     cl::CommandQueue queue;
 
     std::vector<std::string> build_opts;
+
+    std::vector<cl::ImageFormat> formats;
 
 };

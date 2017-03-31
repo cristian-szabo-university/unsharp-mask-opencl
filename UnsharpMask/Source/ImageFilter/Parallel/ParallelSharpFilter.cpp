@@ -14,11 +14,6 @@ ParallelSharpFilter::~ParallelSharpFilter()
 
 bool ParallelSharpFilter::onLoad(std::shared_ptr<ImageProcess> proc)
 {
-    if (kernel())
-    {
-        return true;
-    }
-
     std::shared_ptr<ParallelBlurSharpProcess> cst_proc = std::dynamic_pointer_cast<ParallelBlurSharpProcess>(proc);
 
     if (!cst_proc)
@@ -65,14 +60,14 @@ std::uint64_t ParallelSharpFilter::onApply(const PPM & image)
 
     cl::Image2D input = cl::Image2D(context,
         CL_MEM_READ_WRITE,
-        cl::ImageFormat(CL_RGBA, CL_UNORM_INT8),
+        cl::ImageFormat(image.getCLFormat(), CL_UNORM_INT8),
         image.getWidth(), image.getHeight());
 
     queue.enqueueWriteImage(input, CL_BLOCKING, origin, region, 0, 0, image.getData());
 
     cl::Image2D blur = cl::Image2D(context,
         CL_MEM_READ_WRITE,
-        cl::ImageFormat(CL_RGBA, CL_UNORM_INT8),
+        cl::ImageFormat(image.getCLFormat(), CL_UNORM_INT8),
         image.getWidth(), image.getHeight());
 
     queue.enqueueCopyImage(output, blur, origin, origin, region);

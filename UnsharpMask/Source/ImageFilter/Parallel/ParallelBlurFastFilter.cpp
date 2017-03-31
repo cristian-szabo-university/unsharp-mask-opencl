@@ -2,9 +2,10 @@
 
 #include "ImageFilter\Parallel\ParallelBlurFastFilter.hpp"
 
-#include "ImageProcess\Parallel\ParallelBlurSharpProcess.hpp"
+#include "ImageProcess\Parallel\ParallelBlurSharpFastProcess.hpp"
 
-ParallelBlurFastFilter::ParallelBlurFastFilter()
+ParallelBlurFastFilter::ParallelBlurFastFilter(bool original)
+    : original(original)
 {
 }
 
@@ -14,7 +15,7 @@ ParallelBlurFastFilter::~ParallelBlurFastFilter()
 
 bool ParallelBlurFastFilter::onLoad(std::shared_ptr<ImageProcess> proc)
 {
-    std::shared_ptr<ParallelBlurSharpProcess> cst_proc = std::dynamic_pointer_cast<ParallelBlurSharpProcess>(proc);
+    std::shared_ptr<ParallelBlurSharpFastProcess> cst_proc = std::dynamic_pointer_cast<ParallelBlurSharpFastProcess>(proc);
 
     if (!cst_proc)
     {
@@ -28,8 +29,6 @@ bool ParallelBlurFastFilter::onLoad(std::shared_ptr<ImageProcess> proc)
     queue = cst_proc->getQueue();
 
     context = queue.getInfo<CL_QUEUE_CONTEXT>();
-
-    first_run = true;
 
     return true;
 }
@@ -50,7 +49,7 @@ std::uint64_t ParallelBlurFastFilter::onApply(const PPM & image)
 
     cl::Buffer input = cl::Buffer(context, CL_MEM_READ_WRITE, image.getSize());
 
-    if (first_run)
+    if (original)
     {
         queue.enqueueWriteBuffer(input, CL_BLOCKING, 0, image.getSize(), image.getData());
     }
@@ -68,10 +67,13 @@ std::uint64_t ParallelBlurFastFilter::onApply(const PPM & image)
         kernel,
         cl::NullRange,
         cl::NDRange(image.getWidth(), image.getHeight()),
-        cl::NullRange,
+        cl::NDRange(16, 16),
         NULL, &event);
 
     event.wait();
+
+    std::vector<std::uint8_t> data(3);
+    queue.enqueueReadBuffer(output, CL_BLOCKING, 0, 3, data.data());
 
     std::int64_t start_time = event.getProfilingInfo<CL_PROFILING_COMMAND_START>();
 
@@ -85,9 +87,7 @@ void ParallelBlurFastFilter::onAfter()
     std::vector<cl::Memory> objects;
     objects.push_back(output);
 
-    queue.enqueueReleaseGLObjects(&objects);
-
     queue.finish();
 
-    first_run = false;
+    queue.enqueueReleaseGLObjects(&objects);
 }

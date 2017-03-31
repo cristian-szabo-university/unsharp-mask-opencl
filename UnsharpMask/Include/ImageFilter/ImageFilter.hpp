@@ -12,13 +12,13 @@ public:
 
 protected:
 
-    virtual bool onLoad(std::shared_ptr<ImageProcess> proc) = 0;
+    virtual bool onLoad(std::shared_ptr<ImageProcess> proc);
 
-    virtual void onBefore(std::uint32_t glTexId) = 0;
+    virtual void onBefore(std::uint32_t glTexId);
 
     virtual std::uint64_t onApply(const PPM& image) = 0;
 
-    virtual void onAfter() = 0;
+    virtual void onAfter();
 
 private:
 

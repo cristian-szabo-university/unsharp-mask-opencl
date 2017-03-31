@@ -7,6 +7,21 @@ PPM::PPM(Mode mode)
 {
 }
 
+bool PPM::create(std::int32_t width, std::int32_t height, std::uint32_t internal_format)
+{
+    Format format;
+
+    switch (internal_format)
+    {
+        case GL_R8: format = Format::R; break;
+        case GL_RG8: format = Format::RG; break;
+        case GL_RGB8: format = Format::RGB; break;
+        case GL_RGBA8: format = Format::RGBA; break;
+    }
+
+    return create(width, height, format);
+}
+
 bool PPM::create(std::int32_t width, std::int32_t height, Format format)
 {
     if (isReady())
@@ -53,7 +68,7 @@ bool PPM::convert(Format format)
 
     std::int32_t size = width * height;
     std::int32_t new_channels = getChannels(format);
-    std::vector<std::uint8_t> new_data(size * new_channels, 0);
+    std::vector<std::uint8_t> new_data(size * new_channels, 255);
 
     std::int32_t steps = std::min(channels, new_channels);
 
@@ -115,6 +130,21 @@ std::int32_t PPM::getGLFormat() const
         case Format::RGB: result = GL_RGB; break;
         case Format::RGBA: result = GL_RGBA; break;
         default: throw std::runtime_error("Invalid image format!");
+    }
+
+    return result;
+}
+
+cl_channel_order PPM::getCLFormat() const
+{
+    cl_channel_order result;
+
+    switch (format)
+    {
+        case PPM::Format::R: result = CL_R; break;
+        case PPM::Format::RG: result = CL_RG; break;
+        case PPM::Format::RGB: result = CL_RGB; break;
+        case PPM::Format::RGBA: result = CL_RGBA; break;
     }
 
     return result;
@@ -250,13 +280,17 @@ std::ostream& operator<<(std::ostream& output, const PPM& image)
     }
     else
     {
-        std::size_t count = 0;
-        std::size_t size = image.getSize();
-        unsigned* data = static_cast<unsigned*>(image.getData());
+        std::uint32_t count = 0;
+        std::uint32_t size = image.getSize();
+        std::uint8_t* data = static_cast<std::uint8_t*>(image.getData());
+
+        unsigned byte;
 
         while (count < size)
         {
-            output << data[count++] << ' ';
+            byte = data[count++];
+
+            output << byte << ' ';
 
             if (count % 18 == 0)
             {
@@ -264,7 +298,7 @@ std::ostream& operator<<(std::ostream& output, const PPM& image)
             }
         }
     }
-    
+
     return output;
 }
 
@@ -316,16 +350,13 @@ std::istream& operator>>(std::istream& input, PPM& image)
         return input;
     }
 
-    std::uint64_t read_bytes = 0;
-
     if (image.getMode() == PPM::Mode::Binary)
     {
         input.read(static_cast<char*>(image.getData()), image.getSize());
-
-        read_bytes = input.gcount();
     }
     else
     {     
+        std::uint32_t count = 0;
         std::uint8_t* data = static_cast<std::uint8_t*>(image.getData());
 
         unsigned byte;
@@ -334,15 +365,8 @@ std::istream& operator>>(std::istream& input, PPM& image)
         {
             input >> std::skipws >> byte;
 
-            data[read_bytes++] = byte;
+            data[count++] = byte;
         }
-
-        --read_bytes;
-    }
-
-    if (read_bytes != image.getSize())
-    {
-        image.destroy();
     }
     
     return input;

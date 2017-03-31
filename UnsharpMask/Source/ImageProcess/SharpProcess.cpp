@@ -11,6 +11,11 @@ SharpProcess::~SharpProcess()
 {
 }
 
+void SharpProcess::setRadius(std::uint32_t radius)
+{
+    this->radius = radius;
+}
+
 std::uint32_t SharpProcess::getRadius()
 {
     return radius;

@@ -6,7 +6,7 @@ class UNSHARP_MASK_PUBLIC ParallelBlurFilter : public ImageFilter
 {
 public:
 
-    ParallelBlurFilter();
+    ParallelBlurFilter(bool original = false);
 
     virtual ~ParallelBlurFilter();
 
@@ -30,6 +30,6 @@ private:
 
     cl::ImageGL output;
 
-    bool first_run;
+    bool original;
 
 };

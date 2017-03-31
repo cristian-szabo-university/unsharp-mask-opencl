@@ -14,6 +14,11 @@ ParallelGaussianSharpFilter::~ParallelGaussianSharpFilter()
 
 bool ParallelGaussianSharpFilter::onLoad(std::shared_ptr<ImageProcess> proc)
 {
+    if (kernel())
+    {
+        return true;
+    }
+
     std::shared_ptr<ParallelGaussianSharpProcess> cst_proc = std::dynamic_pointer_cast<ParallelGaussianSharpProcess>(proc);
 
     if (!cst_proc)

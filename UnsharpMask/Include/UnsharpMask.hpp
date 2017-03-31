@@ -21,4 +21,5 @@
 #include "ImageProcess\Serial\SerialBlurSharpProcess.hpp"
 
 #include "ImageProcess\Parallel\ParallelBlurSharpProcess.hpp"
+#include "ImageProcess\Parallel\ParallelBlurSharpFastProcess.hpp"
 #include "ImageProcess\Parallel\ParallelGaussianSharpProcess.hpp"

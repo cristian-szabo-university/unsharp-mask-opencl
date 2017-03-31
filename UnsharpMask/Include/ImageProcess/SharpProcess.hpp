@@ -10,6 +10,8 @@ public:
 
     virtual ~SharpProcess();
 
+    void setRadius(std::uint32_t radius);
+
     std::uint32_t getRadius();
 
     float getAlpha();

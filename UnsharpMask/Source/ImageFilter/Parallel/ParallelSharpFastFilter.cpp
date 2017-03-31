@@ -2,7 +2,7 @@
 
 #include "ImageFilter\Parallel\ParallelSharpFastFilter.hpp"
 
-#include "ImageProcess\Parallel\ParallelBlurSharpProcess.hpp"
+#include "ImageProcess\Parallel\ParallelBlurSharpFastProcess.hpp"
 
 ParallelSharpFastFilter::ParallelSharpFastFilter()
 {
@@ -14,7 +14,7 @@ ParallelSharpFastFilter::~ParallelSharpFastFilter()
 
 bool ParallelSharpFastFilter::onLoad(std::shared_ptr<ImageProcess> proc)
 {
-    std::shared_ptr<ParallelBlurSharpProcess> cst_proc = std::dynamic_pointer_cast<ParallelBlurSharpProcess>(proc);
+    std::shared_ptr<ParallelBlurSharpFastProcess> cst_proc = std::dynamic_pointer_cast<ParallelBlurSharpFastProcess>(proc);
 
     if (!cst_proc)
     {

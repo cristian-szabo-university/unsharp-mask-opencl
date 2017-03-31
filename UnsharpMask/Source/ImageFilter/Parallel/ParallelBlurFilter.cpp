@@ -4,7 +4,8 @@
 
 #include "ImageProcess\Parallel\ParallelBlurSharpProcess.hpp"
 
-ParallelBlurFilter::ParallelBlurFilter()
+ParallelBlurFilter::ParallelBlurFilter(bool original)
+    : original(original)
 {
 }
 
@@ -14,11 +15,6 @@ ParallelBlurFilter::~ParallelBlurFilter()
 
 bool ParallelBlurFilter::onLoad(std::shared_ptr<ImageProcess> proc)
 {
-    if (kernel())
-    {
-        return true;
-    }
-
     std::shared_ptr<ParallelBlurSharpProcess> cst_proc = std::dynamic_pointer_cast<ParallelBlurSharpProcess>(proc);
 
     if (!cst_proc)
@@ -33,8 +29,6 @@ bool ParallelBlurFilter::onLoad(std::shared_ptr<ImageProcess> proc)
     queue = cst_proc->getQueue();
 
     context = queue.getInfo<CL_QUEUE_CONTEXT>();
-
-    first_run = true;
 
     return true;
 }
@@ -67,10 +61,10 @@ std::uint64_t ParallelBlurFilter::onApply(const PPM & image)
 
     cl::Image2D input = cl::Image2D(context,
         CL_MEM_READ_WRITE,
-        cl::ImageFormat(CL_RGBA, CL_UNORM_INT8),
+        cl::ImageFormat(image.getCLFormat(), CL_UNORM_INT8),
         image.getWidth(), image.getHeight());
 
-    if (first_run)
+    if (original)
     {
         queue.enqueueWriteImage(input, CL_BLOCKING, origin, region, 0, 0, image.getData());
     }
@@ -106,6 +100,4 @@ void ParallelBlurFilter::onAfter()
     queue.finish();
 
     queue.enqueueReleaseGLObjects(&objects);
-
-    first_run = false;
 }

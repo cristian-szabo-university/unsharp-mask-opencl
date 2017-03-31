@@ -24,6 +24,8 @@ public:
 
     PPM(Mode mode = Mode::ASCII);
 
+    bool create(std::int32_t width, std::int32_t height, std::uint32_t internal_format);
+
     bool create(std::int32_t width, std::int32_t height, Format format = Format::RGB);
 
     bool isReady() const;
@@ -37,6 +39,8 @@ public:
     Format getFormat() const;
 
     std::int32_t getGLFormat() const;
+
+    cl_channel_order getCLFormat() const;
 
     std::uint32_t getGLInternalFormat() const;
 

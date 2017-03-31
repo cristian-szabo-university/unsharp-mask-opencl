@@ -7,15 +7,6 @@
 ParallelSharpProcess::ParallelSharpProcess(cl::Context context, std::uint32_t radius, float alpha, float beta, float gamma)
     : context(context), SharpProcess(radius, alpha, beta, gamma)
 {
-    std::size_t filter_size = getRadius() * 2 + 1;
-
-    attachBuildOption(std::make_pair("HALF_FILTER_SIZE", std::to_string(getRadius())));
-    attachBuildOption(std::make_pair("FILTER_SIZE", std::to_string(filter_size)));
-    attachBuildOption(std::make_pair("FILTER_AREA", std::to_string(std::pow(filter_size, 2))));
-
-    attachBuildOption(std::make_pair("ALPHA", std::to_string(getAlpha())));
-    attachBuildOption(std::make_pair("BETA", std::to_string(getBeta())));
-    attachBuildOption(std::make_pair("GAMMA", std::to_string(getGamma())));
 }
 
 ParallelSharpProcess::~ParallelSharpProcess()
@@ -38,6 +29,18 @@ bool ParallelSharpProcess::create()
     {
         return false;
     }
+
+    context.getSupportedImageFormats(CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D, &formats);
+
+    std::size_t filter_size = getRadius() * 2 + 1;
+
+    attachBuildOption(std::make_pair("HALF_FILTER_SIZE", std::to_string(getRadius())));
+    attachBuildOption(std::make_pair("FILTER_SIZE", std::to_string(filter_size)));
+    attachBuildOption(std::make_pair("FILTER_AREA", std::to_string(std::pow(filter_size, 2))));
+
+    attachBuildOption(std::make_pair("ALPHA", std::to_string(getAlpha())));
+    attachBuildOption(std::make_pair("BETA", std::to_string(getBeta())));
+    attachBuildOption(std::make_pair("GAMMA", std::to_string(getGamma())));
 
     std::vector<cl::Device> devices;
     context.getInfo(CL_CONTEXT_DEVICES, &devices);
@@ -86,6 +89,20 @@ bool ParallelSharpProcess::create()
     return ImageProcess::create();
 }
 
+bool ParallelSharpProcess::destroy()
+{
+    if (!isReady())
+    {
+        return false;
+    }
+
+    build_opts.clear();
+
+    formats.clear();
+
+    return SharpProcess::destroy();
+}
+
 void ParallelSharpProcess::attachBuildOption(std::pair<std::string, std::string> opt)
 {
     std::string buffer;
@@ -105,4 +122,21 @@ void ParallelSharpProcess::attachBuildOption(std::pair<std::string, std::string>
     buffer += opt.second;
 
     build_opts.push_back(buffer);
+}
+
+bool ParallelSharpProcess::hasImageFormat(cl::ImageFormat format)
+{
+    auto iter_format = std::find_if(formats.begin(), formats.end(), 
+        [&](const cl::ImageFormat& check)
+    {
+        return format.image_channel_order == check.image_channel_order &&
+            format.image_channel_data_type == check.image_channel_data_type;
+    });
+
+    if (iter_format == formats.end())
+    {
+        return false;
+    }
+
+    return true;
 }
