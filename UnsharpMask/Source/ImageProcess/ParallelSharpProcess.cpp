@@ -45,6 +45,15 @@ bool ParallelSharpProcess::create()
     std::vector<cl::Device> devices;
     context.getInfo(CL_CONTEXT_DEVICES, &devices);
 
+#ifdef _DEBUG
+    std::string vendor = devices[0].getInfo<CL_DEVICE_VENDOR>();
+
+    if (vendor.find("NVIDIA") != std::string::npos)
+    {
+        attachBuildOption(std::make_pair("-cl-nv-verbose", ""));
+    }
+#endif
+
     ProgramEntry& prog_src = getProgramSource();
 
     cl::Program::Sources source;
@@ -76,6 +85,12 @@ bool ParallelSharpProcess::create()
 
         throw std::runtime_error(build_log);
     }
+
+#ifdef _DEBUG
+    std::string build_log = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(devices[0]);
+
+    std::cout << build_log << std::endl;
+#endif // DEBUG
 
     cl_build_status status = program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(devices[0]);
 
