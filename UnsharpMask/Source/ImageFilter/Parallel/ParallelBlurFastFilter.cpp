@@ -67,13 +67,10 @@ std::uint64_t ParallelBlurFastFilter::onApply(const PPM & image)
         kernel,
         cl::NullRange,
         cl::NDRange(image.getWidth(), image.getHeight()),
-        cl::NDRange(16, 16),
+        cl::NullRange,
         NULL, &event);
 
     event.wait();
-
-    std::vector<std::uint8_t> data(3);
-    queue.enqueueReadBuffer(output, CL_BLOCKING, 0, 3, data.data());
 
     std::int64_t start_time = event.getProfilingInfo<CL_PROFILING_COMMAND_START>();
 
