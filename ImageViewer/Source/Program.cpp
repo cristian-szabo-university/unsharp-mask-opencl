@@ -1,6 +1,5 @@
 #include "Config.hpp"
 
-#include "GL\glew.h"
 #include "GLFW\glfw3.h"
 
 #include "Program.hpp"
@@ -70,7 +69,7 @@ bool Program::execute(std::shared_ptr<App> app)
 
     if (glewInit() != GLEW_OK)
     {
-        std::cerr << "Failed to initialise GLEW library!\n";
+        std::cout << "Failed to initialize OpenGL context" << std::endl;
 
         return false;
     }

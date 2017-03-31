@@ -1,8 +1,6 @@
 #include "UnsharpMask.hpp"
 
 #include "docopt.h"
-#include "GL\glew.h"
-#include "GL\wglew.h"
 #include "GLFW\glfw3.h"
 
 #include "ImageViewer.hpp"
@@ -22,6 +20,8 @@ ImageViewer::ImageViewer(std::vector<std::string> cli)
         --help      Show this screen.
         --version   Show version.
     )", cli, true, "ImageViewer 1.0.0");
+
+    menu_list.resize(MenuType::Count);
 }
 
 ImageViewer::~ImageViewer()
@@ -43,26 +43,53 @@ std::uint32_t ImageViewer::getHeight()
     return 720;
 }
 
+void ImageViewer::changeRadius(std::uint32_t radius)
+{
+    this->radius = radius;
+
+    proc->setRadius(radius);
+
+    if (proc->isReady())
+    {
+        proc->destroy();
+    }
+
+    proc->create();
+
+    proc->execute(image);
+
+    active_menu.display(true);
+}
+
+void ImageViewer::changeMenu(MenuType type)
+{
+    active_menu = menu_list.at(type);
+
+    active_menu.display(true);
+}
+
 bool ImageViewer::onInit()
 {
+    bool result = true;
+
     radius = args["--radius"].asLong();
     input_filename = args["<input_file>"].asString();
     output_filename = args["<output_file>"].asString();
 
-    std::ifstream first_file(input_filename, std::ios::in);
+    std::ifstream file(input_filename, std::ios::in);
 
-    if (!first_file.is_open())
+    if (!file.is_open())
     {
         std::cerr << "File " << input_filename << " not found!\n";
 
         return false;
     }
 
-    first_file >> image;
+    file >> image;
 
     if (args["serial"].asBool())
     {
-        proc = std::make_shared<SerialBlurSharpProcess>(radius, 1.5f, -0.5f, 0.0f);
+        result = changeSharpProcess<SerialBlurSharpProcess>(radius, 1.5f, -0.5f, 0.0f);
     }
     else if (args["parallel"].asBool())
     {
@@ -87,8 +114,6 @@ bool ImageViewer::onInit()
             0
         };
 
-        cl::Context context(CL_DEVICE_TYPE_ALL, properties);
-        /*
         for (auto& platform : platforms)
         {
             properties[1] = (cl_context_properties)(platform());
@@ -97,8 +122,16 @@ bool ImageViewer::onInit()
             {
                 context = cl::Context(CL_DEVICE_TYPE_GPU, properties);
             }
-            catch (cl::Error& err)
+            catch (cl::Error& ex)
             {
+                if (ex.err() != CL_DEVICE_NOT_FOUND)
+                {
+                    std::cerr << "OpenCL Error: " << ex.what() << std::endl;
+                    std::cerr << "Code: " << ex.err() << std::endl;
+
+                    return false;
+                }
+
                 std::cerr << "No device found for platform " << platform.getInfo<CL_PLATFORM_NAME>() << std::endl;
 
                 continue;
@@ -109,39 +142,14 @@ bool ImageViewer::onInit()
                 break;
             }
         }
-        */
-        //proc = std::make_shared<ParallelBlurSharpProcess>(context, radius, 1.5f, -0.5f, 0.0f, false);
-        proc = std::make_shared<ParallelGaussianSharpProcess>(context, radius, 1.5f, -0.5f, 0.0f);
-    }
 
-    bool result;
-
-    try
-    {
-        result = proc->create();
-    }
-    catch (cl::Error& ex)
-    {
-        std::cerr << "OpenCL Error: " << ex.err() << std::endl;
-        std::cerr << ex.what() << std::endl;
-
-        result = false;
-    }
-    catch (std::exception& ex)
-    {
-        std::cerr << "Exception: " << ex.what() << std::endl;
-
-        result = false;
+        result = changeSharpProcess<ParallelBlurSharpFastProcess>(context, radius, 1.5f, -0.5f, 0.0f);
     }
 
     if (!result)
     {
         return false;
     }
-
-    std::uint64_t exec_time = proc->execute(image);
-
-    std::cout << "Time elapsed: " << exec_time / 1000 / 1000 << " ms." << std::endl;
 
     glGenTextures(1, &glTexId);
 
@@ -157,11 +165,123 @@ bool ImageViewer::onInit()
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    return result;
+    Menu menu_main = Menu("Sharpenning Image Tool");
+    menu_main.addOption(
+        "Change blur algorithm.",
+        [&] { changeMenu(MenuType::Blur); });
+    menu_main.addOption(
+        "Adjust box linear filter size.",
+        [&] { changeMenu(MenuType::Radius); });
+    menu_main.addOption(
+        "Refresh image.",
+        [&] 
+    { 
+        std::uint64_t time_exec = proc->execute(image);
+
+        std::cout << "Time generated: " << time_exec / 1000.0f / 1000.0f << " ms." << std::endl;
+    });
+    menu_main.addOption(
+        "Save sharp image.",
+        [&] 
+    { 
+        PPM output;
+
+        glBindTexture(GL_TEXTURE_2D, proc->getObjectGL());
+
+        int width, height, internalFormat;
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &internalFormat);
+
+        output.create(width, height, internalFormat);
+
+        glGetTexImage(GL_TEXTURE_2D, 0, output.getGLFormat(), GL_UNSIGNED_BYTE, output.getData());
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        if (output.getFormat() == PPM::Format::RG ||
+            output.getFormat() == PPM::Format::RGBA)
+        {
+            output.convert(PPM::Format::RGB);
+        }
+
+        std::ofstream file(output_filename, std::ios::out); 
+        file << output;
+    });
+    menu_main.addOption(
+        "Quit application.",
+        [&] { running = false; });
+    menu_list[MenuType::Main] = menu_main;
+
+    Menu menu_radius = Menu("Select blur filter size (radius)");
+    menu_radius.addOption(
+        "3 pixels (5x5 box linear filter)",
+        [&] { changeRadius(2); }, 
+        [&] { return radius == 2; });
+    menu_radius.addOption(
+        "5 pixels (9x9 box linear filter)",
+        [&] { changeRadius(4); }, 
+        [&] { return radius == 4; });
+    menu_radius.addOption(
+        "7 pixels (13x13 box linear filter)",
+        [&] { changeRadius(6); }, 
+        [&] { return radius == 6; });
+    menu_radius.addOption(
+        "11 pixels (21x21 box linear filter)",
+        [&] { changeRadius(10); }, 
+        [&] { return radius == 10; });
+    menu_radius.addOption(
+        "13 pixels (25x25 box linear filter)",
+        [&] { changeRadius(12); }, 
+        [&] { return radius == 12; });
+    menu_radius.addOption(
+        "Go back to main menu.",
+        [&] { changeMenu(MenuType::Main); });
+    menu_list[MenuType::Radius] = menu_radius;
+
+    Menu menu_blur = Menu("Select blur algorithm");
+    menu_blur.addOption(
+        "Average Blur - Serial (CPU)",
+        [&] { changeSharpProcess<SerialBlurSharpProcess>(radius, 1.5f, -0.5f, 0.0f); },
+        [&] { return isSharpProcess<SerialBlurSharpProcess>(); });
+    menu_blur.addOption(
+        "Average Blur - Image2D (GPU)",
+        [&] { changeSharpProcess<ParallelBlurSharpProcess>(context, radius, 1.5f, -0.5f, 0.0f); },
+        [&] { return isSharpProcess<ParallelBlurSharpProcess>(); });
+    menu_blur.addOption(
+        "Average Blur - Buffer (GPU Bandwidth Efficient)",
+        [&] { changeSharpProcess<ParallelBlurSharpFastProcess>(context, radius, 1.5f, -0.5f, 0.0f); },
+        [&] { return isSharpProcess<ParallelBlurSharpFastProcess>(); });
+    menu_blur.addOption(
+        "Gaussian Blur (GPU)",
+        [&] { changeSharpProcess<ParallelGaussianSharpProcess>(context, radius, 1.5f, -0.5f, 0.0f); },
+        [&] { return isSharpProcess<ParallelGaussianSharpProcess>(); });
+    menu_blur.addOption(
+        "Go back to main menu.",
+        [&] { changeMenu(MenuType::Main); });
+    menu_list[MenuType::Blur] = menu_blur;
+
+    changeMenu(MenuType::Main);
+
+    return true;
 }
 
 bool ImageViewer::onUpdate(double delta_time)
 {
+    if (user_input.valid())
+    {
+        std::future_status status = user_input.wait_for(std::chrono::nanoseconds(1));
+
+        if (status == std::future_status::ready)
+        {
+            active_menu.runCommand(user_input.get());
+        }
+    }
+    else
+    {
+        user_input = active_menu.askInput();
+    }
+
     return running;
 }
 
