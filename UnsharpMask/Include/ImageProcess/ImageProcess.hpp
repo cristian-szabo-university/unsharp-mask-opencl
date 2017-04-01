@@ -32,6 +32,8 @@ protected:
 
     virtual void onAfterExecute();
 
+    bool reloadFilters();
+
 private:
 
     bool ready;

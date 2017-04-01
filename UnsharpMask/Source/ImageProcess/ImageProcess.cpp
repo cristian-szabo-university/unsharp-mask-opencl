@@ -29,12 +29,9 @@ bool ImageProcess::create()
         return false;
     }
 
-    for (auto& filter : filters)
+    if (!reloadFilters())
     {
-        if (!filter->onLoad(shared_from_this()))
-        {
-            return false;
-        }
+        return false;
     }
 
     ready = !ready;
@@ -81,6 +78,8 @@ bool ImageProcess::destroy()
         return false;
     }
 
+    filters.clear();
+
     ready = !ready;
 
     return true;
@@ -97,4 +96,17 @@ void ImageProcess::onBeforeExecute(PPM & image)
 
 void ImageProcess::onAfterExecute()
 {
+}
+
+bool ImageProcess::reloadFilters()
+{
+    for (auto& filter : filters)
+    {
+        if (!filter->onLoad(shared_from_this()))
+        {
+            return false;
+        }
+    }
+
+    return true;
 }

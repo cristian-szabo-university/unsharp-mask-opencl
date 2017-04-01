@@ -26,6 +26,8 @@ protected:
 
     virtual void onBeforeExecute(PPM& image) override;
 
+    virtual void onRadiusChange();
+
 private:
 
     std::uint32_t radius;

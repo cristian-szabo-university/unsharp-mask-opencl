@@ -14,6 +14,8 @@ SharpProcess::~SharpProcess()
 void SharpProcess::setRadius(std::uint32_t radius)
 {
     this->radius = radius;
+
+    onRadiusChange();
 }
 
 std::uint32_t SharpProcess::getRadius()
@@ -81,4 +83,9 @@ void SharpProcess::onBeforeExecute(PPM & image)
     glBindTexture(GL_TEXTURE_2D, 0);
 
     setObjectGL(texId);
+}
+
+void SharpProcess::onRadiusChange()
+{
+    reloadFilters();
 }
