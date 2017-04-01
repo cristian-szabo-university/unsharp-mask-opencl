@@ -39,8 +39,8 @@ __kernel void sharp_filter_fast(__global uchar* orig_img, __global uchar* blur_i
     const float3 orig_clr = convert_float3(vload3(idx, orig_img));
     const float3 blur_clr = pixel_average(x, y, blur_img, width, height);
     
-    float3 result = orig_clr * (float3)(ALPHA) + blur_clr * (float3)(BETA) + (float3)(GAMMA);
-    result = clamp(result, (float3)(0.0f), (float3)(255.0f));
+    uchar3 result = convert_uchar3(orig_clr * (float3)(ALPHA) + blur_clr * (float3)(BETA) + (float3)(GAMMA));
+    result = clamp(result, (uchar3)(0), (uchar3)(UCHAR_MAX));
     
-    vstore3(convert_uchar3(result), idx, output);
+    vstore3(result, idx, output);
 }
