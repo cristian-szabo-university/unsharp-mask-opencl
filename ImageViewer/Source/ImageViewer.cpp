@@ -87,62 +87,62 @@ bool ImageViewer::onInit()
 
     file >> image;
 
+    std::vector<cl::Platform> platforms;
+    cl::Platform::get(&platforms);
+
+    if (platforms.size() == 0)
+    {
+        std::cerr << "No OpenCL platform found!\n";
+
+        return false;
+    }
+
+    const auto hGLRC = wglGetCurrentContext();
+    const auto hDC = wglGetCurrentDC();
+
+    cl_context_properties properties[] =
+    {
+        CL_CONTEXT_PLATFORM, (cl_context_properties)platforms[0](),
+        CL_GL_CONTEXT_KHR, (cl_context_properties)hGLRC,
+        CL_WGL_HDC_KHR, (cl_context_properties)hDC,
+        0
+    };
+
+    for (auto& platform : platforms)
+    {
+        properties[1] = (cl_context_properties)(platform());
+
+        try
+        {
+            context = cl::Context(CL_DEVICE_TYPE_GPU, properties);
+        }
+        catch (cl::Error& ex)
+        {
+            if (ex.err() != CL_DEVICE_NOT_FOUND)
+            {
+                std::cerr << "OpenCL Error: " << ex.what() << std::endl;
+                std::cerr << "Code: " << ex.err() << std::endl;
+
+                return false;
+            }
+
+            std::cerr << "No device found for platform " << platform.getInfo<CL_PLATFORM_NAME>() << std::endl;
+
+            continue;
+        }
+
+        if (context())
+        {
+            break;
+        }
+    }
+
     if (args["serial"].asBool())
     {
         result = changeSharpProcess<SerialBlurSharpProcess>(radius, 1.5f, -0.5f, 0.0f);
     }
     else if (args["parallel"].asBool())
     {
-        std::vector<cl::Platform> platforms;
-        cl::Platform::get(&platforms);
-
-        if (platforms.size() == 0)
-        {
-            std::cerr << "No OpenCL platform found!\n";
-
-            return false;
-        }
-
-        const auto hGLRC = wglGetCurrentContext();
-        const auto hDC = wglGetCurrentDC();
-
-        cl_context_properties properties[] =
-        {
-            CL_CONTEXT_PLATFORM, (cl_context_properties)platforms[0](),
-            CL_GL_CONTEXT_KHR, (cl_context_properties)hGLRC,
-            CL_WGL_HDC_KHR, (cl_context_properties)hDC,
-            0
-        };
-
-        for (auto& platform : platforms)
-        {
-            properties[1] = (cl_context_properties)(platform());
-
-            try
-            {
-                context = cl::Context(CL_DEVICE_TYPE_GPU, properties);
-            }
-            catch (cl::Error& ex)
-            {
-                if (ex.err() != CL_DEVICE_NOT_FOUND)
-                {
-                    std::cerr << "OpenCL Error: " << ex.what() << std::endl;
-                    std::cerr << "Code: " << ex.err() << std::endl;
-
-                    return false;
-                }
-
-                std::cerr << "No device found for platform " << platform.getInfo<CL_PLATFORM_NAME>() << std::endl;
-
-                continue;
-            }
-
-            if (context())
-            {
-                break;
-            }
-        }
-
         result = changeSharpProcess<ParallelBlurSharpFastProcess>(context, radius, 1.5f, -0.5f, 0.0f);
     }
 
