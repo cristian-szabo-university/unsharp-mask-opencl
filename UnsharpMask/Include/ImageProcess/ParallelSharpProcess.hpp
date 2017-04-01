@@ -22,9 +22,11 @@ public:
 
 protected:
 
-    void attachBuildOption(std::pair<std::string, std::string> opt);
+    void attachBuildOption(std::string opt, std::string value = "");
 
     virtual ProgramEntry getProgramSource() = 0;
+
+    virtual void onRadiusChange() override;
 
     bool hasImageFormat(cl::ImageFormat format);
 
@@ -36,8 +38,10 @@ private:
 
     cl::CommandQueue queue;
 
-    std::vector<std::string> build_opts;
+    std::vector<std::pair<std::string, std::string>> build_opts;
 
     std::vector<cl::ImageFormat> formats;
+
+    cl::Program buildProgram(cl::Context context);
 
 };
