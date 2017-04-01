@@ -42,6 +42,9 @@ bool ParallelSharpProcess::create()
     attachBuildOption(std::make_pair("BETA", std::to_string(getBeta())));
     attachBuildOption(std::make_pair("GAMMA", std::to_string(getGamma())));
 
+    attachBuildOption(std::make_pair("-cl-fast-relaxed-math", ""));
+    attachBuildOption(std::make_pair("-cl-mad-enable", ""));
+
     std::vector<cl::Device> devices;
     context.getInfo(CL_CONTEXT_DEVICES, &devices);
 
