@@ -43,18 +43,14 @@ std::uint32_t ImageViewer::getHeight()
     return 720;
 }
 
+std::int32_t ImageViewer::getRadius()
+{
+    return proc->getRadius();
+}
+
 void ImageViewer::changeRadius(std::uint32_t radius)
 {
-    this->radius = radius;
-
     proc->setRadius(radius);
-
-    if (proc->isReady())
-    {
-        proc->destroy();
-    }
-
-    proc->create();
 
     proc->execute(image);
 
@@ -72,7 +68,7 @@ bool ImageViewer::onInit()
 {
     bool result = true;
 
-    radius = args["--radius"].asLong();
+    std::uint32_t radius = args["--radius"].asLong();
     input_filename = args["<input_file>"].asString();
     output_filename = args["<output_file>"].asString();
 
@@ -217,23 +213,23 @@ bool ImageViewer::onInit()
     menu_radius.addOption(
         "3 pixels (5x5 box linear filter)",
         [&] { changeRadius(2); }, 
-        [&] { return radius == 2; });
+        [&] { return getRadius() == 2; });
     menu_radius.addOption(
         "5 pixels (9x9 box linear filter)",
         [&] { changeRadius(4); }, 
-        [&] { return radius == 4; });
+        [&] { return getRadius() == 4; });
     menu_radius.addOption(
         "7 pixels (13x13 box linear filter)",
         [&] { changeRadius(6); }, 
-        [&] { return radius == 6; });
+        [&] { return getRadius() == 6; });
     menu_radius.addOption(
         "11 pixels (21x21 box linear filter)",
         [&] { changeRadius(10); }, 
-        [&] { return radius == 10; });
+        [&] { return getRadius() == 10; });
     menu_radius.addOption(
         "13 pixels (25x25 box linear filter)",
         [&] { changeRadius(12); }, 
-        [&] { return radius == 12; });
+        [&] { return getRadius() == 12; });
     menu_radius.addOption(
         "Go back to main menu.",
         [&] { changeMenu(MenuType::Main); });
@@ -242,19 +238,19 @@ bool ImageViewer::onInit()
     Menu menu_blur = Menu("Select blur algorithm");
     menu_blur.addOption(
         "Average Blur - Serial (CPU)",
-        [&] { changeSharpProcess<SerialBlurSharpProcess>(radius, 1.5f, -0.5f, 0.0f); },
+        [&] { changeSharpProcess<SerialBlurSharpProcess>(getRadius(), 1.5f, -0.5f, 0.0f); },
         [&] { return isSharpProcess<SerialBlurSharpProcess>(); });
     menu_blur.addOption(
         "Average Blur - Image2D (GPU)",
-        [&] { changeSharpProcess<ParallelBlurSharpProcess>(context, radius, 1.5f, -0.5f, 0.0f); },
+        [&] { changeSharpProcess<ParallelBlurSharpProcess>(context, getRadius(), 1.5f, -0.5f, 0.0f); },
         [&] { return isSharpProcess<ParallelBlurSharpProcess>(); });
     menu_blur.addOption(
         "Average Blur - Buffer (GPU Bandwidth Efficient)",
-        [&] { changeSharpProcess<ParallelBlurSharpFastProcess>(context, radius, 1.5f, -0.5f, 0.0f); },
+        [&] { changeSharpProcess<ParallelBlurSharpFastProcess>(context, getRadius(), 1.5f, -0.5f, 0.0f); },
         [&] { return isSharpProcess<ParallelBlurSharpFastProcess>(); });
     menu_blur.addOption(
         "Gaussian Blur (GPU)",
-        [&] { changeSharpProcess<ParallelGaussianSharpProcess>(context, radius, 1.5f, -0.5f, 0.0f); },
+        [&] { changeSharpProcess<ParallelGaussianSharpProcess>(context, getRadius(), 1.5f, -0.5f, 0.0f); },
         [&] { return isSharpProcess<ParallelGaussianSharpProcess>(); });
     menu_blur.addOption(
         "Go back to main menu.",

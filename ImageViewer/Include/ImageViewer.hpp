@@ -51,8 +51,6 @@ private:
 
     std::map<std::string, docopt::value> args;
 
-    std::uint32_t radius;
-
     std::string input_filename;
 
     std::string output_filename;
@@ -119,12 +117,14 @@ private:
             return false;
         }
 
-        std::uint64_t time_exec = proc->execute(image);
+        proc->execute(image);
 
         active_menu.display(true);
 
         return result;
     }
+
+    std::int32_t getRadius();
 
     void changeRadius(std::uint32_t radius);
 
