@@ -68,11 +68,11 @@ bool ImageViewer::onInit()
 {
     bool result = true;
 
-    std::uint32_t radius = args["--radius"].asLong();
+    std::uint32_t radius = args["--radius"].isLong() ? args["--radius"].asLong() : 4;
     input_filename = args["<input_file>"].asString();
     output_filename = args["<output_file>"].asString();
 
-    std::ifstream file(input_filename, std::ios::in);
+    std::ifstream file(input_filename, std::ios::in | std::ios::binary);
 
     if (!file.is_open())
     {
