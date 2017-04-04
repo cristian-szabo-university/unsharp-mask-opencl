@@ -352,6 +352,9 @@ std::istream& operator>>(std::istream& input, PPM& image)
 
     if (image.getMode() == PPM::Mode::Binary)
     {
+        char tmp;
+        input.read(&tmp, 1);
+
         input.read(static_cast<char*>(image.getData()), image.getSize());
     }
     else
