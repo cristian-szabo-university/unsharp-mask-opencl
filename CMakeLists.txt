@@ -24,8 +24,6 @@ set (CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/${CMAKE_PROJECT_NAME}/cmake")
 set (DEPENDENCIES_PATH "${CMAKE_CURRENT_BINARY_DIR}/Dependencies/Install" 
     CACHE PATH "Location of the dependencies folder." FORCE)
 
-set_directory_properties (PROPERTIES EP_BASE "${CMAKE_BINARY_DIR}/ExternalProjects")
-
 ###############################################################################
 #   PROJECTS
 ###############################################################################
